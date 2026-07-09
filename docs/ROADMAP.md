@@ -10,25 +10,26 @@ Milestones are **vertical slices**: each one is a shippable increment. All numbe
 ## M1 — Minimal playable slice
 - Generate a small two-base arena; place your **4 Castles**, a starting army, **villagers**, a base of
   military buildings (Imperial Age, starting stipend), and a minimal **enemy fortress** (a couple of castles).
-- Spawn **3** escalating waves that attack-move your castles.
+- An **endless looping spawner** (a few escalating waves for the slice) that attack-moves your castles.
 - Basic income: a **periodic gold** loop (+ stipend) so you can build/train; full kill-income lands in M2.
-- Win/lose wired: **win** = raze the enemy castles (works any time); clearing wave 3 triggers the
-  **finale** (spawns stop + siege grant); **lose** = all your castles fall.
+- Win/lose wired: **win** = raze all enemy castles (the only win); **lose** = all your castles fall.
+  No finale — the spawner never stops.
 - `scripts/build` + `scripts/deploy`; a round-trip test in `tests/`.
 - **Done when:** it loads in AoE2 DE and you can build forward, win (raze the enemy), and lose.
 
 ## M2 — Full escalation & economy
-- All **12** waves with tiered archetypes (infantry → ranged → cavalry → siege) from `config/*.yaml`.
+- **Endless** spawner with tiered archetypes (infantry → ranged → cavalry → siege) from `config/*.yaml`,
+  escalating to a peak around **wave 12** then holding at full intensity.
 - **Kill income** (accumulate_attribute on Kills) + **periodic gold** + starting stipend; Houses for population.
-- Reinforcements each wave; upgrades via the native tech tree.
-- Tune the **enemy fortress** so the offensive rush is tempting but risky.
+- Periodic reinforcements; upgrades via the native tech tree.
+- Tune the **enemy fortress** + escalation cap so the break-out is tempting but risky.
 - First balance pass.
-- **Done when:** a full 12-wave run feels escalating and fair, and the rush is a viable gamble.
+- **Done when:** the endless ramp feels relentless-but-fair and a well-timed raze is a viable gamble.
 
-## M3 — Co-op, difficulty, endless
+## M3 — Co-op & difficulty
 - 2–4 player co-op.
 - Difficulty tiers (config profiles).
-- Endless mode with score = waves survived.
+- Scoring: time-to-raze and/or longest hold.
 - **Done when:** a group can play co-op and pick a difficulty.
 
 ## M4 — Polish & publish

@@ -1,8 +1,8 @@
 # CBA Survival — an Age of Empires II: DE mod
 
 > A co-op-capable **PvE survival** scenario for Age of Empires II: Definitive Edition.
-> Defend your **4 Castles** against escalating waves from an enemy fortress. Reinforce, upgrade,
-> outlast — or break out and raze their castles.
+> Hold your **4 Castles** against endless escalating waves from an enemy fortress — then break out and
+> raze their castles to win.
 
 **Status:** 🟡 Planning (Milestone 0). No playable build yet — see the [Roadmap](docs/ROADMAP.md).
 
@@ -21,13 +21,12 @@ from code** (via [AoE2ScenarioParser]), so:
 Details in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## The game (v1)
-You (Player 1) defend a base of **4 Castles**. An **enemy fortress** (Player 2) launches **12
-escalating waves** that march on them. You start in the **Imperial Age** with a base and **villagers**,
-and earn resources from **kills + periodic income** — spend it to train any army, research upgrades, and
-**build army buildings forward** to push (classic CBA). **To win, raze the enemy fortress's castles** —
-clearing all 12 waves stops the onslaught and hands you a siege battalion for the final assault, or break
-out early if you are strong enough. You lose only when all 4 of your castles fall.
-Full design: [docs/DESIGN.md](docs/DESIGN.md).
+You (Player 1) defend a base of **4 Castles**. An **enemy fortress** (Player 2) pours out an **endless**
+stream of escalating waves that march on them. You start in the **Imperial Age** with a base and
+**villagers**, and earn resources from **kills + periodic income** — spend it to train any army, research
+upgrades, and **build army buildings forward** to push (classic CBA). The onslaught **never stops**, so
+the **only way to win is to raze the enemy fortress's castles** — you must defend *and* break out. You
+lose when all 4 of your castles fall. Full design: [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Contributing
 New contributors welcome — especially **wave designs and balance tuning**, which need *no coding*

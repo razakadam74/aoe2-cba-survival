@@ -46,32 +46,29 @@ The scenario is assembled with AoE2ScenarioParser "managers":
   buildings forward themselves — that is the CBA push.
 - **player_manager** — enable Player 2; set Player 1 to the **Imperial Age** with a starting stipend (so
   every unit, including siege, is immediately trainable).
-- **trigger_manager** — the game logic (below), generated in loops from config.
+- **trigger_manager** — the game logic (below), generated from config.
 - **xs_manager** — reserved for advanced logic later.
 
 ## Trigger design (the heart of it)
 Generated from the YAML config:
 - **Setup** (`execute_on_load`): set P1↔P2 diplomacy to **enemy**, grant the starting stipend,
   **`add_train_location`**(Villager → your Castle) + **`change_object_cost`**(Villager → expensive) so the
-  Castle produces pricey builders (no Town Center), show intro, activate Wave 1. (Imperial Age + starting
-  buildings/resources are set on the player.)
-- **Wave N — Start** (activated by the previous wave): `display_instructions` ("Wave N"),
-  `create_object` × the wave's units at the enemy-fortress spawn area, `attack_move` those P2 units
-  toward your Castles, then `activate_trigger` → Wave N — Cleared.
-- **Wave N — Cleared**: conditions `timer(breather)` **and** `own_fewer_objects(1, source_player=TWO,
-  <military only>)` → effects: a "Wave cleared" message, then activate Wave N+1 (or the **Defensive
-  Finale** on the last wave). Income comes from kills during the wave (see Income), not a wave-clear lump.
+  Castle produces pricey builders (no Town Center), initialise the **wave counter** variable, show intro,
+  start the **Spawn loop**.
+- **Spawn wave** (looping, fires every *interval* seconds — endless): increment the wave counter,
+  `create_object` the wave's units (composition scales with `min(counter, cap)`) at the enemy-fortress
+  spawn area, then `attack_move` those P2 units toward your Castles. Never deactivates — the onslaught
+  is relentless.
 - **Income** (looping): **periodic gold** every X seconds (`modify_resource`), plus **kill income** — an
   `accumulate_attribute` loop on the *Kills* attribute (confirm the attribute id) that grants gold as your
   kill count climbs. Classic-CBA, so little/no gathering.
-- **Defensive Finale** (on wave 12 cleared): stop further spawns (don't activate more waves),
-  `create_object` a **siege battalion** (Rams/Trebuchets) for Player 1, and message *"The onslaught is
-  broken — raze their fortress!"*.
 - **Victory** (the only win): `own_fewer_objects(1, object_list=Castle, source_player=TWO)` — no enemy
-  castles left → `declare_victory(source_player=ONE)`. Active from the start, so an **early breakout**
-  wins too.
-- **Defeat**: `own_fewer_objects(1, object_list=Castle, source_player=ONE)` (all 4 of your castles
-  gone) → enemy `declare_victory` (you lose).
+  castles left → `declare_victory(source_player=ONE)`. Active from the start.
+- **Defeat**: `own_fewer_objects(1, object_list=Castle, source_player=ONE)` — all 4 of your castles gone
+  → enemy `declare_victory` (you lose).
+
+> There is **no finale / no survive-to-win trigger** — the spawn loop never stops, so the game ends only
+> when one side's castles are gone.
 
 ## Validated datasets (IDs we'll use)
 **Units:** Villager 83, Militia 74, Man-at-Arms 75, Spearman 93, Archer 4, Skirmisher 7, Crossbowman 24,
@@ -88,11 +85,14 @@ Town Center 109, Watch Tower 79, Stone Wall 117, Gate 487, House 70.
 - **create → attack_move in the same trigger**: created units must be selectable by the following
   `attack_move`. Common pattern, but if enemies stand still we split "spawn" and "command" into two
   triggers ~1s apart.
-- **`own_fewer_objects` counts the right things**: for "wave dead" we must count only P2 *military*
-  (not the enemy castles), and for the win/lose castle checks we filter by `object_list = Castle`.
-  The breather timer also guards against firing before units spawn.
+- **`own_fewer_objects` counts the right things**: for the win/lose checks, filter by
+  `object_list = Castle` so "fewer than 1" cleanly means "that side's castles are gone".
+- **Endless spawn hygiene**: the looping spawner must not pile up so many units it tanks performance —
+  cap concurrent units / spawn size in config, and confirm the loop's timer re-arms cleanly.
 - **`declare_victory` win-vs-lose flag** — confirm in-game; fallback for the loss case is "enemy
   declares victory".
+- **Kill income**: confirm the exact *Kills* attribute id for `accumulate_attribute`; the periodic-gold
+  loop is a safe fallback if per-kill proves fiddly.
 - **Round-trip** — build → write → read back → assert triggers/units. This is M1's first test.
 
 ## Testing
