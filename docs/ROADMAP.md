@@ -8,17 +8,18 @@ Milestones are **vertical slices**: each one is a shippable increment. All numbe
 - **Done when:** the repo is public and a newcomer can understand the project and how to help.
 
 ## M1 — Minimal playable slice
-- Generate a small two-base arena; place your **4 Castles**, a starting army, the **full military
-  building set** (Imperial Age, generous stipend), and a minimal **enemy fortress** (a couple of castles).
+- Generate a small two-base arena; place your **4 Castles**, a starting army, **villagers**, a base of
+  military buildings (Imperial Age, starting stipend), and a minimal **enemy fortress** (a couple of castles).
 - Spawn **3** escalating waves that attack-move your castles.
+- Basic income: a **periodic gold** loop (+ stipend) so you can build/train; full kill-income lands in M2.
 - Win/lose wired: **win** = raze the enemy castles (works any time); clearing wave 3 triggers the
   **finale** (spawns stop + siege grant); **lose** = all your castles fall.
 - `scripts/build` + `scripts/deploy`; a round-trip test in `tests/`.
-- **Done when:** it loads in AoE2 DE and you can win (raze the enemy) and lose.
+- **Done when:** it loads in AoE2 DE and you can build forward, win (raze the enemy), and lose.
 
 ## M2 — Full escalation & economy
 - All **12** waves with tiered archetypes (infantry → ranged → cavalry → siege) from `config/*.yaml`.
-- Wave-clear bounties + trickle; starting stipend; Houses for population.
+- **Kill income** (accumulate_attribute on Kills) + **periodic gold** + starting stipend; Houses for population.
 - Reinforcements each wave; upgrades via the native tech tree.
 - Tune the **enemy fortress** so the offensive rush is tempting but risky.
 - First balance pass.

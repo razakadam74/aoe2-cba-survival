@@ -40,25 +40,30 @@ Local mods folder (this machine):
 ## Generation model
 The scenario is assembled with AoE2ScenarioParser "managers":
 - **map_manager** — map size & terrain (v1: small two-base grass arena).
-- **unit_manager** — place your **4 Castles**, a starting army, the **full set of military buildings**
-  (Barracks, Archery Range, Stable, Siege Workshop, Monastery, Castle + Blacksmith/University + Houses),
-  and the **enemy fortress** castles (`add_unit(player, unit_const, x, y)`).
-- **player_manager** — enable Player 2; set Player 1 to the **Imperial Age** with a generous starting
-  stipend (so every unit, including siege, is immediately trainable).
+- **unit_manager** — place your **4 Castles**, a starting army, **villagers**, a base of core military
+  buildings (Barracks, Archery Range, Stable, Siege Workshop, Monastery, Castle + Blacksmith/University +
+  Houses), and the **enemy fortress** castles (`add_unit(player, unit_const, x, y)`). Players build *more*
+  buildings forward themselves — that is the CBA push.
+- **player_manager** — enable Player 2; set Player 1 to the **Imperial Age** with a starting stipend (so
+  every unit, including siege, is immediately trainable).
 - **trigger_manager** — the game logic (below), generated in loops from config.
 - **xs_manager** — reserved for advanced logic later.
 
 ## Trigger design (the heart of it)
 Generated from the YAML config:
-- **Setup** (`execute_on_load`): set P1↔P2 diplomacy to **enemy**, grant starting stipend, show
-  intro, activate Wave 1.
+- **Setup** (`execute_on_load`): set P1↔P2 diplomacy to **enemy**, grant the starting stipend,
+  **`add_train_location`**(Villager → your Castle) + **`change_object_cost`**(Villager → expensive) so the
+  Castle produces pricey builders (no Town Center), show intro, activate Wave 1. (Imperial Age + starting
+  buildings/resources are set on the player.)
 - **Wave N — Start** (activated by the previous wave): `display_instructions` ("Wave N"),
   `create_object` × the wave's units at the enemy-fortress spawn area, `attack_move` those P2 units
   toward your Castles, then `activate_trigger` → Wave N — Cleared.
 - **Wave N — Cleared**: conditions `timer(breather)` **and** `own_fewer_objects(1, source_player=TWO,
-  <military only>)` → effects: bounty via `modify_resource`, "Wave cleared", then activate Wave N+1
-  (or **Defensive Victory** on the last wave).
-- **Trickle** (looping): every X seconds, `modify_resource` a small amount.
+  <military only>)` → effects: a "Wave cleared" message, then activate Wave N+1 (or the **Defensive
+  Finale** on the last wave). Income comes from kills during the wave (see Income), not a wave-clear lump.
+- **Income** (looping): **periodic gold** every X seconds (`modify_resource`), plus **kill income** — an
+  `accumulate_attribute` loop on the *Kills* attribute (confirm the attribute id) that grants gold as your
+  kill count climbs. Classic-CBA, so little/no gathering.
 - **Defensive Finale** (on wave 12 cleared): stop further spawns (don't activate more waves),
   `create_object` a **siege battalion** (Rams/Trebuchets) for Player 1, and message *"The onslaught is
   broken — raze their fortress!"*.
@@ -69,7 +74,7 @@ Generated from the YAML config:
   gone) → enemy `declare_victory` (you lose).
 
 ## Validated datasets (IDs we'll use)
-**Units:** Militia 74, Man-at-Arms 75, Spearman 93, Archer 4, Skirmisher 7, Crossbowman 24,
+**Units:** Villager 83, Militia 74, Man-at-Arms 75, Spearman 93, Archer 4, Skirmisher 7, Crossbowman 24,
 Long Swordsman 77, Knight 38, Scout Cavalry 448, Champion 567, Monk 125, Mangonel 280,
 Battering Ram 1258.
 **Player siege / raze tools:** Capped Ram 422, Siege Ram 548, Onager 550, Trebuchet 42 (packed 331),
