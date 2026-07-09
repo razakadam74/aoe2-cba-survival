@@ -10,8 +10,8 @@ beloved **CBA (Castle Blood Automatic)** scenarios — *Castle* (you defend a cl
 You defend a base of **4 Castles** against an **endless** stream of escalating waves from an **enemy
 fortress**. The onslaught *never stops* — the only way out is to **raze the enemy's castles**. So you
 must **defend and push at the same time**: hold the line while carving out enough of an army to break
-their fortress. Imperial-Age start, full army freedom, classic-CBA economy. Solo-testable first,
-co-op later.
+their fortress. Imperial-Age start, full army freedom, classic-CBA economy. Play **solo or up-to-7-player
+co-op** vs the AI enemy — and, later, let a human take the enemy's seat and attack everyone.
 
 ## Core loop
 1. **Hold** — waves pour out of the enemy fortress and march on your Castles. Keep them off.
@@ -25,11 +25,11 @@ co-op later.
 ## v1 spec (locked)
 | Aspect | Decision |
 |---|---|
-| Players | 1 human (Player 1) vs a hostile **enemy fortress** (Player 2). P2 is *not* a mirror army — it's castles + an endless wave spawner, so the mode stays solo-testable. |
+| Players | **1–7 co-op defenders** (Players 1–7), each with **their own 4 Castles**, vs **1 enemy** (Player 8) — an AI fortress + endless spawner now, **swappable to a human** later. Solo = the 1-defender case. |
 | Objective | **Raze all enemy Castles.** |
 | Waves | **Endless.** Difficulty escalates to a peak around **wave 12**, then keeps coming at full intensity. They never stop. |
 | Win | Destroy **all enemy Castles** — the only win. |
-| Lose | All 4 of your Castles destroyed. |
+| Lose | **You** are eliminated when your own 4 Castles fall (teammates fight on); the **team loses** only when every defender is out. |
 | Fight-back | **Hybrid**: starting army + small auto-reinforcements + train/upgrade with earned resources; **build your own siege** to crack castles. |
 | Economy | Income from **kills + periodic gold** (little/no gathering) + a starting stipend. Spend on army *and* forward buildings. |
 | Map | Small flat **two-base arena** (your castles ↔ battlefield ↔ enemy fortress). Polished later in the in-game editor. |
@@ -47,6 +47,16 @@ to the attack and your base falls behind you. Timing your break-out is the whole
 
 You crack castles with **siege you build yourself** (Rams / Trebuchets / Bombards from your Siege
 Workshop and Castle) — that's why you get full army freedom and a generous-enough economy.
+
+## Players & modes
+- **Co-op survival (1–7 defenders):** Players 1–7 team up, **each defending their own 4 Castles**. You're
+  **eliminated** when your castles fall; teammates fight on. The **team wins** by razing the enemy, and
+  only **loses** when everyone is out.
+- **The enemy is one slot (Player 8):** an **AI** fortress + endless spawner today. Because it's just a
+  player slot, everything scales — **solo** is simply the 1-defender case, and **7v1** is the same
+  scenario with more seats filled.
+- **Play-as-the-enemy (future):** drop a **human** into Player 8 and they *become* the attacker — an
+  asymmetric 1-vs-many "human boss" mode (Vampirism-style), on the same map and triggers. *(Stretch.)*
 
 ## Wave escalation model
 - Waves spawn **continuously** from the enemy fortress on a timer — relentless, classic-CBA style.
@@ -73,8 +83,9 @@ Workshop and Castle) — that's why you get full army freedom and a generous-eno
   you train.
 
 ## Win / lose
-- **Win**: destroy **all enemy Castles** → victory. (Active from the start — break out whenever you can.)
-- **Lose**: all 4 of your Castles destroyed → defeat.
+- **Team win**: destroy **all enemy Castles** → every surviving defender wins. (Active from the start — break out whenever you can.)
+- **Eliminated**: when your **own** 4 Castles fall, you're out — but your teammates fight on.
+- **Team loss**: when **every** defender has been eliminated.
 - **No survive-to-win**: the waves never stop; razing the enemy is the only way out.
 
 ## Difficulty (post-v1)
@@ -82,7 +93,7 @@ Difficulty tiers scale wave size/composition, spawn rate, the escalation cap, an
 toughness — implemented as alternate `config/` profiles rather than code branches.
 
 ## Stretch goals (post-v1)
-- **Co-op** for 2–4 players (shared or individual castle bases).
+- **Play-as-the-enemy** — a human takes Player 8 and attacks all defenders (asymmetric 1-vs-many PvP).
 - **Scoring / leaderboards** — fastest raze, or longest hold.
 - **Boss waves** (unique tanky units) at intervals.
 - **Map variants** (chokepoints, multiple spawn lanes).

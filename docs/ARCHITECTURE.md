@@ -40,32 +40,34 @@ Local mods folder (this machine):
 ## Generation model
 The scenario is assembled with AoE2ScenarioParser "managers":
 - **map_manager** — map size & terrain (v1: small two-base grass arena).
-- **unit_manager** — place your **4 Castles**, a starting army, **villagers**, a base of core military
-  buildings (Barracks, Archery Range, Stable, Siege Workshop, Monastery, Castle + Blacksmith/University +
-  Houses), and the **enemy fortress** castles (`add_unit(player, unit_const, x, y)`). Players build *more*
-  buildings forward themselves — that is the CBA push.
-- **player_manager** — enable Player 2; set Player 1 to the **Imperial Age** with a starting stipend (so
-  every unit, including siege, is immediately trainable).
+- **unit_manager** — for **each active defender (Players 1–7)** place their **4 Castles**, a starting army,
+  **villagers**, and a base of core military buildings (Barracks, Archery Range, Stable, Siege Workshop,
+  Monastery, Castle + Blacksmith/University + Houses); place the **enemy fortress** castles for **Player 8**
+  (`add_unit(player, unit_const, x, y)`). Defenders build *more* buildings forward themselves — the CBA push.
+- **player_manager** — enable the **defender count** (1–7, from config) + the **enemy (Player 8)**; set each
+  defender to the **Imperial Age** with a starting stipend. Defender count is a config knob, so solo (1) and
+  7v1 use the same generator.
 - **trigger_manager** — the game logic (below), generated from config.
 - **xs_manager** — reserved for advanced logic later.
 
 ## Trigger design (the heart of it)
 Generated from the YAML config:
-- **Setup** (`execute_on_load`): set P1↔P2 diplomacy to **enemy**, grant the starting stipend,
-  **`add_train_location`**(Villager → your Castle) + **`change_object_cost`**(Villager → expensive) so the
-  Castle produces pricey builders (no Town Center), initialise the **wave counter** variable, show intro,
-  start the **Spawn loop**.
+- **Setup** (`execute_on_load`): set the **defender team (P1–P7) at war with the enemy (P8)** and allied
+  with each other; grant each defender the starting stipend; **`add_train_location`**(Villager → Castle) +
+  **`change_object_cost`**(Villager → expensive) per defender (no Town Center); init the **wave counter**;
+  show intro; start the **Spawn loop**.
 - **Spawn wave** (looping, fires every *interval* seconds — endless): increment the wave counter,
-  `create_object` the wave's units (composition scales with `min(counter, cap)`) at the enemy-fortress
-  spawn area, then `attack_move` those P2 units toward your Castles. Never deactivates — the onslaught
-  is relentless.
+  `create_object` the wave's units (composition scales with `min(counter, cap)`) at the enemy (P8) spawn
+  area, then `attack_move` those P8 units toward the defenders' Castles. Never deactivates — relentless.
+  *(When a human occupies P8 they command the army instead of the spawner.)*
 - **Income** (looping): **periodic gold** every X seconds (`modify_resource`), plus **kill income** — an
   `accumulate_attribute` loop on the *Kills* attribute (confirm the attribute id) that grants gold as your
   kill count climbs. Classic-CBA, so little/no gathering.
-- **Victory** (the only win): `own_fewer_objects(1, object_list=Castle, source_player=TWO)` — no enemy
-  castles left → `declare_victory(source_player=ONE)`. Active from the start.
-- **Defeat**: `own_fewer_objects(1, object_list=Castle, source_player=ONE)` — all 4 of your castles gone
-  → enemy `declare_victory` (you lose).
+- **Team Victory** (the only win): `own_fewer_objects(1, object_list=Castle, source_player=EIGHT)` — no
+  enemy castles left → `declare_victory` for every surviving defender. Active from the start.
+- **Elimination / Defeat**: per defender, `own_fewer_objects(1, object_list=Castle, source_player=<Pn>)` —
+  that player's castles gone → they're **eliminated**. When **all** defenders are out → enemy (P8)
+  `declare_victory` (team loss).
 
 > There is **no finale / no survive-to-win trigger** — the spawn loop never stops, so the game ends only
 > when one side's castles are gone.
@@ -79,7 +81,7 @@ Bombard Cannon 36, Petard 440.
 **Buildings:** Castle 82 (yours ×4 **and** the enemy fortress), Barracks 12, Archery Range 87,
 Stable 101, **Siege Workshop 49**, **Monastery 104**, Blacksmith 103, University 209, Market 84,
 Town Center 109, Watch Tower 79, Stone Wall 117, Gate 487, House 70.
-**Player IDs:** GAIA 0, ONE 1 (you), TWO 2 (enemy fortress).
+**Player IDs:** GAIA 0, ONE–SEVEN 1–7 (co-op defenders, count from config), EIGHT 8 (enemy fortress — AI now, human later).
 
 ## Risks to validate in M1 (being honest about unknowns)
 - **create → attack_move in the same trigger**: created units must be selectable by the following

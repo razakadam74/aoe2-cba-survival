@@ -25,8 +25,9 @@ You (Player 1) defend a base of **4 Castles**. An **enemy fortress** (Player 2) 
 stream of escalating waves that march on them. You start in the **Imperial Age** with a base and
 **villagers**, and earn resources from **kills + periodic income** — spend it to train any army, research
 upgrades, and **build army buildings forward** to push (classic CBA). The onslaught **never stops**, so
-the **only way to win is to raze the enemy fortress's castles** — you must defend *and* break out. You
-lose when all 4 of your castles fall. Full design: [docs/DESIGN.md](docs/DESIGN.md).
+the **only way to win is to raze the enemy fortress's castles** — you must defend *and* break out. Play
+**solo or up-to-7-player co-op** (each defends their own castles; a human can even take the enemy's seat
+later). You lose when your castles fall. Full design: [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Contributing
 New contributors welcome — especially **wave designs and balance tuning**, which need *no coding*

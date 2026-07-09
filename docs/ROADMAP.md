@@ -26,11 +26,11 @@ Milestones are **vertical slices**: each one is a shippable increment. All numbe
 - First balance pass.
 - **Done when:** the endless ramp feels relentless-but-fair and a well-timed raze is a viable gamble.
 
-## M3 — Co-op & difficulty
-- 2–4 player co-op.
+## M3 — Co-op (up to 7v1) & difficulty
+- **Up to 7-player co-op** (each defends their own 4 castles; individual elimination; team win by raze).
 - Difficulty tiers (config profiles).
 - Scoring: time-to-raze and/or longest hold.
-- **Done when:** a group can play co-op and pick a difficulty.
+- **Done when:** 7 players can defend together vs the AI enemy and pick a difficulty.
 
 ## M4 — Polish & publish
 - Map-design pass in the in-game editor (chokepoints, visuals).
@@ -38,6 +38,11 @@ Milestones are **vertical slices**: each one is a shippable increment. All numbe
 - Publish to **mod.io** via the in-game Mods menu.
 - GitHub Release attaching the built `.aoe2scenario` for non-coders.
 - **Done when:** it's live on mod.io and downloadable from Releases.
+
+## M5 — Play-as-the-enemy (stretch)
+- Let a human occupy the enemy slot (**Player 8**) and command the assault — asymmetric 1-vs-many PvP.
+- Same map/triggers; the wave spawner yields to the human's army.
+- **Done when:** a human can play the enemy and attack the defenders.
 
 ## From milestones to work
 Each milestone breaks into GitHub issues labeled `M1`/`M2`/… and `good first issue` where possible.
