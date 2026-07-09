@@ -8,13 +8,13 @@ Milestones are **vertical slices**: each one is a shippable increment. All numbe
 - **Done when:** the repo is public and a newcomer can understand the project and how to help.
 
 ## M1 — Minimal playable slice
-- Generate a small two-base arena; place your **4 Castles** + a starting army + one production
-  building, and a minimal **enemy fortress** (a couple of castles).
+- Generate a small two-base arena; place your **4 Castles**, a starting army, the **full military
+  building set** (Imperial Age, generous stipend), and a minimal **enemy fortress** (a couple of castles).
 - Spawn **3** escalating waves that attack-move your castles.
-- All three end-states wired: **defensive win** (survive 3), **offensive win** (raze enemy castles),
-  **lose** (all your castles fall).
+- Win/lose wired: **win** = raze the enemy castles (works any time); clearing wave 3 triggers the
+  **finale** (spawns stop + siege grant); **lose** = all your castles fall.
 - `scripts/build` + `scripts/deploy`; a round-trip test in `tests/`.
-- **Done when:** it loads in AoE2 DE and you can win *both* ways and lose.
+- **Done when:** it loads in AoE2 DE and you can win (raze the enemy) and lose.
 
 ## M2 — Full escalation & economy
 - All **12** waves with tiered archetypes (infantry → ranged → cavalry → siege) from `config/*.yaml`.

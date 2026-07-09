@@ -40,9 +40,11 @@ Local mods folder (this machine):
 ## Generation model
 The scenario is assembled with AoE2ScenarioParser "managers":
 - **map_manager** — map size & terrain (v1: small two-base grass arena).
-- **unit_manager** — place your **4 Castles**, starting army, production buildings, and the
-  **enemy fortress** castles (`add_unit(player, unit_const, x, y)`).
-- **player_manager** — enable Player 2, set starting resources.
+- **unit_manager** — place your **4 Castles**, a starting army, the **full set of military buildings**
+  (Barracks, Archery Range, Stable, Siege Workshop, Monastery, Castle + Blacksmith/University + Houses),
+  and the **enemy fortress** castles (`add_unit(player, unit_const, x, y)`).
+- **player_manager** — enable Player 2; set Player 1 to the **Imperial Age** with a generous starting
+  stipend (so every unit, including siege, is immediately trainable).
 - **trigger_manager** — the game logic (below), generated in loops from config.
 - **xs_manager** — reserved for advanced logic later.
 
@@ -57,19 +59,24 @@ Generated from the YAML config:
   <military only>)` → effects: bounty via `modify_resource`, "Wave cleared", then activate Wave N+1
   (or **Defensive Victory** on the last wave).
 - **Trickle** (looping): every X seconds, `modify_resource` a small amount.
-- **Defensive Victory**: after wave 12 cleared → `declare_victory(source_player=ONE)`.
-- **Offensive Victory**: `own_fewer_objects(1, object_list=Castle, source_player=TWO)` (no enemy
-  castles left) → `declare_victory(source_player=ONE)`.
+- **Defensive Finale** (on wave 12 cleared): stop further spawns (don't activate more waves),
+  `create_object` a **siege battalion** (Rams/Trebuchets) for Player 1, and message *"The onslaught is
+  broken — raze their fortress!"*.
+- **Victory** (the only win): `own_fewer_objects(1, object_list=Castle, source_player=TWO)` — no enemy
+  castles left → `declare_victory(source_player=ONE)`. Active from the start, so an **early breakout**
+  wins too.
 - **Defeat**: `own_fewer_objects(1, object_list=Castle, source_player=ONE)` (all 4 of your castles
   gone) → enemy `declare_victory` (you lose).
 
 ## Validated datasets (IDs we'll use)
 **Units:** Militia 74, Man-at-Arms 75, Spearman 93, Archer 4, Skirmisher 7, Crossbowman 24,
-Long Swordsman 77, Knight 38, Scout Cavalry 448, Champion 567, Mangonel 280, Battering Ram 1258,
-Villager 83.
-**Buildings:** Castle 82 (yours ×4 **and** the enemy fortress), Town Center 109, Barracks 12,
-Archery Range 87, Stable 101, Blacksmith 103, University 209, Watch Tower 79, Stone Wall 117,
-Gate 487, House 70.
+Long Swordsman 77, Knight 38, Scout Cavalry 448, Champion 567, Monk 125, Mangonel 280,
+Battering Ram 1258.
+**Player siege / raze tools:** Capped Ram 422, Siege Ram 548, Onager 550, Trebuchet 42 (packed 331),
+Bombard Cannon 36, Petard 440.
+**Buildings:** Castle 82 (yours ×4 **and** the enemy fortress), Barracks 12, Archery Range 87,
+Stable 101, **Siege Workshop 49**, **Monastery 104**, Blacksmith 103, University 209, Market 84,
+Town Center 109, Watch Tower 79, Stone Wall 117, Gate 487, House 70.
 **Player IDs:** GAIA 0, ONE 1 (you), TWO 2 (enemy fortress).
 
 ## Risks to validate in M1 (being honest about unknowns)
