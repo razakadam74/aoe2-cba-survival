@@ -20,7 +20,7 @@ Milestones are **vertical slices**: each one is a shippable increment. All numbe
 ## M2 - Full escalation & economy  🟢 (code complete, pending playtest + balance pass)
 - **Endless** spawner with tiered archetypes (infantry -> ranged -> cavalry -> siege) from `config/*.yaml`,
   escalating over ~10 scripted waves toward a peak, then holding at full intensity via the looping peak.
-- **Kill income** (accumulate_attribute on Units Killed) + **periodic gold** + starting stipend; Houses for population.
+- **Kill income** (per-kill gold via a variable delta-poll of Units Killed) + **periodic gold** + starting stipend; Houses for population.
 - Periodic reinforcements (a squad arrives at each base on a timer); upgrades via the native tech tree.
 - Tune the **enemy fortress** + escalation cap so the break-out is tempting but risky. *(balance = playtest)*
 - First balance pass. *(needs in-game playtest)*

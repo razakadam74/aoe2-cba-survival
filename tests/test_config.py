@@ -119,3 +119,14 @@ def test_missing_periodic_gold_block_rejected():
     del balance["periodic_gold"]
     with pytest.raises(ConfigError):
         parse_config(balance, waves)
+
+
+def test_null_optional_blocks_are_treated_as_disabled():
+    # Bare/null YAML keys (e.g. `kill_income:`) should mean "disabled", not crash.
+    balance, waves = _raw()
+    balance = copy.deepcopy(balance)
+    balance["kill_income"] = None
+    balance["reinforcements"] = None
+    config = parse_config(balance, waves)
+    assert not config.balance.kill_income.enabled
+    assert not config.balance.reinforcements.enabled

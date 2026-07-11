@@ -69,11 +69,12 @@ periodic_gold:
   amount: 120
   interval_seconds: 20
 
-# Kill income (M2): classic-CBA gold as your kill count climbs. Grants reward_gold
-# for every per_kills enemy units your team kills. Set reward_gold: 0 to disable.
+# Kill income (M2): classic-CBA "every kill pays gold". Every poll_seconds we
+# convert your new enemy kills into gold at gold_per_kill each. Set
+# gold_per_kill: 0 to disable.
 kill_income:
-  reward_gold: 50
-  per_kills: 3
+  gold_per_kill: 15
+  poll_seconds: 5
 
 # Periodic reinforcements (M2): a small squad arrives at each base on a timer, on
 # top of whatever you train. Leave units empty ([]) to disable.

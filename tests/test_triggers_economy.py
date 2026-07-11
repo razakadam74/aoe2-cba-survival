@@ -12,7 +12,7 @@ from AoE2ScenarioParser.datasets.effects import EffectId
 
 from cba_survival.builder import build_scenario
 from cba_survival.config import parse_config
-from cba_survival.datasets import Attribute, ConfigError
+from cba_survival.datasets import ConfigError
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_DIR = ROOT / "config"
@@ -28,12 +28,9 @@ def test_kill_income_trigger_present_and_shaped(built, config):
     assert config.balance.kill_income.enabled
     trigger = trigger_named(built, "Kill income - Player 1")
     assert trigger.looping
-    assert len(trigger.conditions) == 1
-    cond = trigger.conditions[0]
-    assert cond.attribute == Attribute.UNITS_KILLED.value
-    assert cond.quantity == config.balance.kill_income.per_kills
-    assert cond.source_player == 1
-    assert len(trigger.effects) == 1  # modify_resource(+gold)
+    assert len(trigger.conditions) == 1  # poll timer
+    # delta-poll: read total, subtract paid, scale by gold_per_kill, pay, remember.
+    assert len(trigger.effects) == 5
 
 
 def test_reinforcements_trigger_creates_squad(built, config):
@@ -49,7 +46,7 @@ def test_reinforcements_trigger_creates_squad(built, config):
 def test_kill_income_disabled_produces_no_triggers():
     balance, waves = _raw()
     balance = copy.deepcopy(balance)
-    balance["kill_income"]["reward_gold"] = 0
+    balance["kill_income"]["gold_per_kill"] = 0
     scenario = build_scenario(parse_config(balance, waves))
     assert not any(t.name.startswith("Kill income") for t in scenario.trigger_manager.triggers)
 
@@ -62,9 +59,9 @@ def test_reinforcements_disabled_produces_no_triggers():
     assert not any(t.name.startswith("Reinforcements") for t in scenario.trigger_manager.triggers)
 
 
-def test_kill_income_per_kills_must_be_positive():
+def test_kill_income_poll_seconds_must_be_positive():
     balance, waves = _raw()
     balance = copy.deepcopy(balance)
-    balance["kill_income"]["per_kills"] = 0
+    balance["kill_income"]["poll_seconds"] = 0
     with pytest.raises(ConfigError):
         parse_config(balance, waves)

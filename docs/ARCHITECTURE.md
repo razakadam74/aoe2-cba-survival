@@ -63,8 +63,9 @@ triggers that hands off to a single endless looping **Peak** trigger (a runtime 
   `create_object` the wave's units at the enemy spawn area, then `attack_move` those enemy units toward the
   defenders' Castles; each wave activates the next, and the last activates the looping Peak that never
   deactivates - relentless. *(When a human occupies the enemy slot they command the army instead of the spawner.)*
-- **Income** (looping): **periodic gold** every X seconds (`modify_resource`) + **kill income** - an
-  `accumulate_attribute` loop on *Units Killed* (attribute 20) that pays gold per block of kills - plus
+- **Income** (looping): **periodic gold** every X seconds (`modify_resource`) + **kill income** - a
+  periodic delta-poll of *Units Killed* (attribute 20) via trigger variables that pays gold per new
+  kill (the raw Accumulate Attribute condition never resets, so we diff the stat instead) - plus
   periodic **reinforcements** (a squad `create_object`ed at each base on a timer, for the player to
   command). Classic-CBA, so little/no gathering.
 - **Team Victory** (the only win): `own_fewer_objects(1, object_list=Castle, source_player=<enemy slot>)` - no

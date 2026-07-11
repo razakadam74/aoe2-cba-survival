@@ -189,22 +189,42 @@ def _build_income(manager, balance, defender_ids: list[int]) -> None:
 
 
 def _build_kill_income(manager, balance, defender_ids: list[int]) -> None:
-    # Classic-CBA kill income: every `per_kills` enemy units killed pays reward_gold.
+    # Classic-CBA "every kill pays gold". The Accumulate Attribute condition never
+    # resets, so instead we poll each defender's Units Killed stat on a timer and
+    # pay for the kills gained since the previous poll (a delta), which cannot run
+    # away and never touches the displayed Kills score.
     kill = balance.kill_income
     if not kill.enabled:
         return
+    scratch = manager.add_variable("kill_income_scratch")
     for pid in defender_ids:
+        paid = manager.add_variable(f"kills_paid_p{pid}")
         trigger = manager.add_trigger(f"Kill income - Player {pid}")
         trigger.enabled = True
         trigger.looping = True
-        trigger.new_condition.accumulate_attribute(
-            quantity=kill.per_kills, attribute=_KILLS_ATTRIBUTE, source_player=pid
+        trigger.new_condition.timer(timer=kill.poll_seconds)
+        # scratch = this player's total Units Killed so far
+        trigger.new_effect.modify_variable_by_resource(
+            tribute_list=_KILLS_ATTRIBUTE, source_player=pid,
+            operation=Operation.SET.value, variable=scratch.variable_id,
         )
-        trigger.new_effect.modify_resource(
-            quantity=kill.reward_gold,
-            tribute_list=RESOURCE_IDS["gold"],
-            source_player=pid,
-            operation=Operation.ADD.value,
+        # scratch = kills since we last paid (the new delta)
+        trigger.new_effect.modify_variable_by_variable(
+            variable=scratch.variable_id, operation=Operation.SUBTRACT.value, variable2=paid.variable_id,
+        )
+        # scratch = delta * gold_per_kill
+        trigger.new_effect.change_variable(
+            variable=scratch.variable_id, operation=Operation.MULTIPLY.value, quantity=kill.gold_per_kill,
+        )
+        # pay it out (delta of 0 adds 0 gold - a harmless no-op)
+        trigger.new_effect.modify_resource_by_variable(
+            tribute_list=RESOURCE_IDS["gold"], source_player=pid,
+            operation=Operation.ADD.value, variable=scratch.variable_id,
+        )
+        # remember the new total so the next poll only pays for newer kills
+        trigger.new_effect.modify_variable_by_resource(
+            tribute_list=_KILLS_ATTRIBUTE, source_player=pid,
+            operation=Operation.SET.value, variable=paid.variable_id,
         )
 
 
