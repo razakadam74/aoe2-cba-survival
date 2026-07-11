@@ -1,0 +1,74 @@
+# CBA Survival - balance and economy
+# =========================================================================
+# This is the easiest place to contribute: it is plain data, no coding.
+# Every value is tunable. After editing, rebuild + playtest:
+#     python scripts/build.py
+#     python scripts/deploy.py
+# Unit / building names are the AoE2ScenarioParser dataset names
+# (e.g. MAN_AT_ARMS, CROSSBOWMAN, SIEGE_WORKSHOP). See docs/ARCHITECTURE.md.
+# =========================================================================
+
+# Mod package metadata (written into the deployable mod's info.json).
+mod:
+  title: "CBA Survival"
+  author: "razakadam74"
+  description: >-
+    Hold your four Castles against endless escalating waves from an enemy
+    fortress, then break out and raze their Castles to win.
+
+# How many co-op defenders (Players 1..N). The M1 slice ships solo (1).
+# Up to 7 is supported by the generator; co-op is tuned in M3.
+defenders: 1
+
+# Small flat two-base arena, tiles per side.
+map_size: 120
+
+# Everyone starts in the Imperial Age (full army freedom from the start).
+starting_age: IMPERIAL_AGE
+
+# Starting resources granted to every defender (the "stipend").
+stipend:
+  food: 1000
+  wood: 1000
+  gold: 1500
+  stone: 800
+
+# Population headroom (also raised in-game by building Houses).
+population_cap: 200
+
+# Villagers: you START with a few and TRAIN more from your Castle (there is
+# no Town Center), made deliberately expensive so you buy a builder to push
+# forward, not to boom. Enabled via add_train_location + change_object_cost.
+starting_villagers: 3
+villager_cost:            # cost override applied to Castle-trained villagers
+  food: 0
+  gold: 150
+villager_train_time: 35  # seconds
+
+# Starting army placed at each defender base.
+starting_army:
+  - { unit: MAN_AT_ARMS, count: 6 }
+  - { unit: CROSSBOWMAN, count: 6 }
+  - { unit: KNIGHT, count: 4 }
+  - { unit: SPEARMAN, count: 4 }
+
+# Core production buildings placed at each defender base (Imperial CBA kit).
+production_buildings:
+  - BARRACKS
+  - ARCHERY_RANGE
+  - STABLE
+  - SIEGE_WORKSHOP
+  - MONASTERY
+  - BLACKSMITH
+  - UNIVERSITY
+houses: 6
+
+# Basic income for M1: a periodic gold drip on top of the stipend above.
+# Full kill-income (accumulate_attribute on Kills) arrives in M2.
+periodic_gold:
+  amount: 120
+  interval_seconds: 20
+
+# The enemy fortress (Player 8): raze all of these Castles to win.
+enemy:
+  castles: 3

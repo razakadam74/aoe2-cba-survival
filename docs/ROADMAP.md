@@ -1,23 +1,23 @@
-# CBA Survival — Roadmap
+# CBA Survival - Roadmap
 
 Milestones are **vertical slices**: each one is a shippable increment. All numbers/waves are tunable.
 
-## M0 — Repo & Plan  ✅ (current)
+## M0 - Repo & Plan  ✅
 - Design, architecture, and roadmap docs.
 - Repo scaffolding, license, contributing guide.
 - **Done when:** the repo is public and a newcomer can understand the project and how to help.
 
-## M1 — Minimal playable slice
+## M1 - Minimal playable slice  🟢 (code complete, pending in-game playtest)
 - Generate a small two-base arena; place your **4 Castles**, a starting army, **villagers**, a base of
   military buildings (Imperial Age, starting stipend), and a minimal **enemy fortress** (a couple of castles).
 - An **endless looping spawner** (a few escalating waves for the slice) that attack-moves your castles.
 - Basic income: a **periodic gold** loop (+ stipend) so you can build/train; full kill-income lands in M2.
 - Win/lose wired: **win** = raze all enemy castles (the only win); **lose** = all your castles fall.
-  No finale — the spawner never stops.
+  No finale - the spawner never stops.
 - `scripts/build` + `scripts/deploy`; a round-trip test in `tests/`.
 - **Done when:** it loads in AoE2 DE and you can build forward, win (raze the enemy), and lose.
 
-## M2 — Full escalation & economy
+## M2 - Full escalation & economy
 - **Endless** spawner with tiered archetypes (infantry → ranged → cavalry → siege) from `config/*.yaml`,
   escalating to a peak around **wave 12** then holding at full intensity.
 - **Kill income** (accumulate_attribute on Kills) + **periodic gold** + starting stipend; Houses for population.
@@ -26,21 +26,21 @@ Milestones are **vertical slices**: each one is a shippable increment. All numbe
 - First balance pass.
 - **Done when:** the endless ramp feels relentless-but-fair and a well-timed raze is a viable gamble.
 
-## M3 — Co-op (up to 7v1) & difficulty
+## M3 - Co-op (up to 7v1) & difficulty
 - **Up to 7-player co-op** (each defends their own 4 castles; individual elimination; team win by raze).
 - Difficulty tiers (config profiles).
 - Scoring: time-to-raze and/or longest hold.
 - **Done when:** 7 players can defend together vs the AI enemy and pick a difficulty.
 
-## M4 — Polish & publish
+## M4 - Polish & publish
 - Map-design pass in the in-game editor (chokepoints, visuals).
 - Playtest-driven tuning.
 - Publish to **mod.io** via the in-game Mods menu.
 - GitHub Release attaching the built `.aoe2scenario` for non-coders.
 - **Done when:** it's live on mod.io and downloadable from Releases.
 
-## M5 — Play-as-the-enemy (stretch)
-- Let a human occupy the enemy slot (**Player 8**) and command the assault — asymmetric 1-vs-many PvP.
+## M5 - Play-as-the-enemy (stretch)
+- Let a human occupy the enemy slot (the last active player) and command the assault - asymmetric 1-vs-many PvP.
 - Same map/triggers; the wave spawner yields to the human's army.
 - **Done when:** a human can play the enemy and attack the defenders.
 

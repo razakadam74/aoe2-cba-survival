@@ -1,7 +1,7 @@
 # Contributing to CBA Survival
 
 Thanks for helping! This project turns a data-driven config into an AoE2 DE survival scenario.
-You **don't** need to be a programmer to contribute — *wave and balance tuning is just editing data.*
+You **don't** need to be a programmer to contribute - *wave and balance tuning is just editing data.*
 
 ## Ways to contribute
 | I want to… | Where | Coding? |
@@ -15,7 +15,7 @@ You **don't** need to be a programmer to contribute — *wave and balance tuning
 ## Dev setup
 1. Install Python 3.10+.
 2. `pip install AoE2ScenarioParser PyYAML`
-3. Windows: run Python with UTF-8 enabled — `set PYTHONUTF8=1`
+3. Windows: run Python with UTF-8 enabled - `set PYTHONUTF8=1`
    (avoids a console emoji crash inside the library).
 
 ## Build & test (available from M1)
@@ -41,10 +41,10 @@ python -m pytest             # round-trip & config-validation tests
 ### Review gate (project convention)
 Before a PR is opened/merged it goes through a **multi-model AI review (4 models)**, and the
 feedback is synthesized into the PR. This catches bugs and design issues early. (Maintainer
-workflow — noted here so contributors know what to expect.)
+workflow - noted here so contributors know what to expect.)
 
 ## Reporting bugs / playtests
-Open an issue with: what you did, what happened, what you expected, and — for gameplay — which
+Open an issue with: what you did, what happened, what you expected, and - for gameplay - which
 wave and how it felt. Screenshots/clips welcome.
 
 ## Be kind
