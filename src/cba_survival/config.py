@@ -66,6 +66,30 @@ class ModMeta:
 
 
 @dataclass(frozen=True)
+class KillIncome:
+    """Gold earned per block of enemy kills (classic-CBA economy, M2)."""
+
+    reward_gold: int
+    per_kills: int
+
+    @property
+    def enabled(self) -> bool:
+        return self.reward_gold > 0 and self.per_kills > 0
+
+
+@dataclass(frozen=True)
+class Reinforcements:
+    """A small squad that arrives at each base on a timer (M2)."""
+
+    interval_seconds: int
+    units: tuple[UnitStack, ...]
+
+    @property
+    def enabled(self) -> bool:
+        return bool(self.units)
+
+
+@dataclass(frozen=True)
 class BalanceConfig:
     mod: ModMeta
     defenders: int
@@ -80,6 +104,8 @@ class BalanceConfig:
     production_buildings: tuple[str, ...]
     houses: int
     periodic_gold: Mapping[str, int]
+    kill_income: KillIncome
+    reinforcements: Reinforcements
     enemy_castles: int
 
     @property
@@ -128,6 +154,8 @@ def _parse_balance(data: Mapping[str, Any]) -> BalanceConfig:
     _require(len(villager_cost) <= 3, "villager_cost may set at most 3 resources")
     _require("periodic_gold" in data, "balance.yaml is missing the 'periodic_gold' block")
     periodic_gold = _parse_periodic_gold(data["periodic_gold"])
+    kill_income = _parse_kill_income(data.get("kill_income", {}))
+    reinforcements = _parse_reinforcements(data.get("reinforcements", {}))
 
     army = _parse_stacks(data.get("starting_army", []), "starting_army", allow_empty=True)
 
@@ -153,7 +181,25 @@ def _parse_balance(data: Mapping[str, Any]) -> BalanceConfig:
         production_buildings=production,
         houses=_int(data, "houses", minimum=0, maximum=200),
         periodic_gold=periodic_gold,
+        kill_income=kill_income,
+        reinforcements=reinforcements,
         enemy_castles=enemy_castles,
+    )
+
+
+def _parse_kill_income(data: Mapping[str, Any]) -> KillIncome:
+    _require(isinstance(data, Mapping), "kill_income must be a mapping")
+    return KillIncome(
+        reward_gold=_int(data, "reward_gold", minimum=0, maximum=100000, default=0),
+        per_kills=_int(data, "per_kills", minimum=1, maximum=100000, default=1),
+    )
+
+
+def _parse_reinforcements(data: Mapping[str, Any]) -> Reinforcements:
+    _require(isinstance(data, Mapping), "reinforcements must be a mapping")
+    return Reinforcements(
+        interval_seconds=_int(data, "interval_seconds", minimum=1, maximum=3600, default=60),
+        units=_parse_stacks(data.get("units", []), "reinforcements units", allow_empty=True),
     )
 
 
@@ -296,9 +342,11 @@ def _read_yaml(path: Path) -> Mapping[str, Any]:
 
 __all__ = [
     "BalanceConfig",
+    "KillIncome",
     "ModConfig",
     "ModMeta",
     "PeakWave",
+    "Reinforcements",
     "UnitStack",
     "Wave",
     "WaveConfig",

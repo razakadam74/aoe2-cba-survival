@@ -4,8 +4,9 @@
 > Hold your **4 Castles** against endless escalating waves from an enemy fortress - then break out and
 > raze their castles to win.
 
-**Status:** 🟢 Milestone 1 code complete (generator + config + build/deploy + tests). Pending in-game
-playtest. See the [Roadmap](docs/ROADMAP.md). Build it yourself: `python scripts/build.py`.
+**Status:** 🟢 Milestones 1-2 code complete (generator, config, build/deploy, tests; endless escalation
++ kill income + reinforcements). Pending in-game playtest + balance pass. See the [Roadmap](docs/ROADMAP.md).
+Build it yourself: `python scripts/build.py`.
 
 ## What makes this different
 Most AoE2 scenarios are hand-clicked in the in-game editor and shipped as an opaque binary

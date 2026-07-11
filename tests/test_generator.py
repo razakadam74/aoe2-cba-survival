@@ -44,8 +44,15 @@ def test_expected_triggers_present(built, config):
 
 
 def test_trigger_count(built, config):
-    # setup + waves + peak + income(N) + win + elimination(N) + defeat
-    expected = 1 + len(config.waves.waves) + 1 + config.balance.defenders + 1 + config.balance.defenders + 1
+    # setup + waves + peak + income(N) + kill-income(N?) + reinforcements(N?)
+    #   + win + elimination(N) + defeat
+    defenders = config.balance.defenders
+    expected = 1 + len(config.waves.waves) + 1 + defenders
+    if config.balance.kill_income.enabled:
+        expected += defenders
+    if config.balance.reinforcements.enabled:
+        expected += defenders
+    expected += 1 + defenders + 1
     assert len(built.trigger_manager.triggers) == expected
 
 
@@ -116,5 +123,5 @@ def test_activation_chain_reaches_looping_peak(built):
     assert visited[0].startswith("Wave 1")
     assert current.name.startswith("Peak")
     assert current.looping
-    wave_names = [n for n in visited if n.startswith("Wave ")]
-    assert wave_names == sorted(wave_names)
+    wave_numbers = [int(n.split(":")[0].split()[1]) for n in visited if n.startswith("Wave ")]
+    assert wave_numbers == list(range(1, len(wave_numbers) + 1))

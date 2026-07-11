@@ -63,12 +63,27 @@ production_buildings:
   - UNIVERSITY
 houses: 6
 
-# Basic income for M1: a periodic gold drip on top of the stipend above.
-# Full kill-income (accumulate_attribute on Kills) arrives in M2.
+# Basic income: a periodic gold drip on top of the stipend above (works alongside
+# the kill income below).
 periodic_gold:
   amount: 120
   interval_seconds: 20
 
-# The enemy fortress (Player 8): raze all of these Castles to win.
+# Kill income (M2): classic-CBA gold as your kill count climbs. Grants reward_gold
+# for every per_kills enemy units your team kills. Set reward_gold: 0 to disable.
+kill_income:
+  reward_gold: 50
+  per_kills: 3
+
+# Periodic reinforcements (M2): a small squad arrives at each base on a timer, on
+# top of whatever you train. Leave units empty ([]) to disable.
+reinforcements:
+  interval_seconds: 45
+  units:
+    - { unit: MAN_AT_ARMS, count: 2 }
+    - { unit: CROSSBOWMAN, count: 2 }
+
+# The enemy fortress (solo = Player 2, up to Player 8 at 7v1): raze all of these
+# Castles to win.
 enemy:
   castles: 3
