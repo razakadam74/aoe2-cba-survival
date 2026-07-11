@@ -17,7 +17,6 @@ from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 
 from .config import ModConfig, PeakWave, UnitStack, Wave
 from .datasets import (
-    Attribute,
     ButtonLocation,
     CASTLE_ID,
     Operation,
@@ -28,7 +27,10 @@ from .datasets import (
 from .layout import Layout, spawn_positions
 from .players import enemy_player_id
 
-_MAX_UNITS_AFFECTED = 255
+_ALL_UNITS_AFFECTED = -1
+# Villager trains from an empty Castle button slot; r1c1 is the Unique Unit.
+_VILLAGER_BUTTON = ButtonLocation.r3c5.value
+_RESOURCE_ORDER = ("food", "wood", "stone", "gold")
 
 INTRO_MESSAGE = (
     "CBA SURVIVAL\n\n"
@@ -37,6 +39,15 @@ INTRO_MESSAGE = (
     "an army, break out, and raze every enemy Castle. Defend and push at the "
     "same time. Good luck!"
 )
+
+
+def _cost_kwargs(cost: dict) -> dict:
+    """Map a resource->quantity cost onto change_object_cost's resource_1..3 slots."""
+    kwargs: dict = {}
+    for slot, name in enumerate((r for r in _RESOURCE_ORDER if r in cost), start=1):
+        kwargs[f"resource_{slot}"] = RESOURCE_IDS[name]
+        kwargs[f"resource_{slot}_quantity"] = cost[name]
+    return kwargs
 
 
 def build_triggers(scenario: AoE2DEScenario, config: ModConfig, layout: Layout) -> None:
@@ -63,22 +74,19 @@ def _build_setup(manager, config: ModConfig, defender_ids: list[int]):
     setup.execute_on_load = True
 
     for pid in defender_ids:
-        # Train villagers from the Castle (no Town Center)...
+        # Train villagers from the Castle (no Town Center), on an empty button...
         setup.new_effect.add_train_location(
             object_list_unit_id=VILLAGER_ID,
             source_player=pid,
             object_list_unit_id_2=CASTLE_ID,
-            button_location=ButtonLocation.r1c1.value,
+            button_location=_VILLAGER_BUTTON,
             train_time=balance.villager_train_time,
         )
-        # ...and make them deliberately expensive.
+        # ...and make them deliberately expensive (whatever resources config sets).
         setup.new_effect.change_object_cost(
             object_list_unit_id=VILLAGER_ID,
             source_player=pid,
-            resource_1=RESOURCE_IDS["food"],
-            resource_1_quantity=balance.villager_cost.get("food", 0),
-            resource_2=RESOURCE_IDS["gold"],
-            resource_2_quantity=balance.villager_cost.get("gold", 0),
+            **_cost_kwargs(balance.villager_cost),
         )
 
     setup.new_effect.display_instructions(
@@ -135,7 +143,15 @@ def _add_spawn(trigger, unit_stacks: tuple[UnitStack, ...], layout: Layout, enem
             )
 
     target_x, target_y = layout.defender_centroid
-    x1, y1, x2, y2 = layout.enemy.spawn_area
+    # Command every unit we just spawned: use their bounding box (+1 tile) as the
+    # selection area and affect all of them, so none are ever left stranded.
+    size = layout.map_size
+    xs = [px for px, _ in positions]
+    ys = [py for _, py in positions]
+    x1 = max(0, min(xs) - 1)
+    y1 = max(0, min(ys) - 1)
+    x2 = min(size - 1, max(xs) + 1)
+    y2 = min(size - 1, max(ys) + 1)
     trigger.new_effect.attack_move(
         source_player=enemy_id,
         location_x=target_x,
@@ -144,7 +160,7 @@ def _add_spawn(trigger, unit_stacks: tuple[UnitStack, ...], layout: Layout, enem
         area_y1=y1,
         area_x2=x2,
         area_y2=y2,
-        max_units_affected=_MAX_UNITS_AFFECTED,
+        max_units_affected=_ALL_UNITS_AFFECTED,
     )
 
 
@@ -180,6 +196,9 @@ def _build_win(manager, defender_ids: list[int], enemy_id: int) -> None:
 
 def _build_defeat(manager, defender_ids: list[int], enemy_id: int) -> None:
     # Per-defender elimination notice (fires once when that player's Castles fall).
+    # M1 ships solo, where losing all Castles is a loss via the team-defeat trigger
+    # below. Mechanically removing a defeated player while co-op teammates fight on
+    # is deferred to M3; for now this is an informational message.
     for pid in defender_ids:
         notice = manager.add_trigger(f"Player {pid} eliminated")
         notice.enabled = True

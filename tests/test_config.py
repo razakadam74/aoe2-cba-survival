@@ -87,3 +87,35 @@ def test_missing_peak_rejected():
     del waves["peak"]
     with pytest.raises(ConfigError):
         parse_config(balance, waves)
+
+
+def test_unsafe_mod_title_rejected():
+    balance, waves = _raw()
+    for bad in ["../escape", "a/b", "..", "he:llo"]:
+        balance = copy.deepcopy(balance)
+        balance["mod"]["title"] = bad
+        with pytest.raises(ConfigError):
+            parse_config(balance, waves)
+
+
+def test_wave_exceeding_max_concurrent_rejected():
+    balance, waves = _raw()
+    waves = copy.deepcopy(waves)
+    waves["max_concurrent"] = 5
+    with pytest.raises(ConfigError):
+        parse_config(balance, waves)  # default waves spawn more than 5
+
+
+def test_villager_cost_over_three_resources_rejected():
+    balance, waves = _raw()
+    balance["villager_cost"] = {"food": 1, "wood": 1, "stone": 1, "gold": 1}
+    with pytest.raises(ConfigError):
+        parse_config(balance, waves)
+
+
+def test_missing_periodic_gold_block_rejected():
+    balance, waves = _raw()
+    balance = copy.deepcopy(balance)
+    del balance["periodic_gold"]
+    with pytest.raises(ConfigError):
+        parse_config(balance, waves)

@@ -9,6 +9,12 @@ from cba_survival.builder import build_scenario
 from cba_survival.config import load_config
 from cba_survival.players import enemy_player_id
 
+# Belt and suspenders: importing cba_survival already disables the library's
+# status prints, but make it explicit so pytest never hits the Windows emoji crash.
+from AoE2ScenarioParser import settings as _settings
+
+_settings.PRINT_STATUS_UPDATES = False
+
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_DIR = ROOT / "config"
 

@@ -124,7 +124,10 @@ def _parse_balance(data: Mapping[str, Any]) -> BalanceConfig:
     mod = _parse_mod(data.get("mod", {}))
     stipend = _resources(data.get("stipend", {}), "stipend")
     villager_cost = _resources(data.get("villager_cost", {}), "villager_cost")
-    periodic_gold = _parse_periodic_gold(data.get("periodic_gold", {}))
+    # A unit has only three cost slots (resource_1..3 on change_object_cost).
+    _require(len(villager_cost) <= 3, "villager_cost may set at most 3 resources")
+    _require("periodic_gold" in data, "balance.yaml is missing the 'periodic_gold' block")
+    periodic_gold = _parse_periodic_gold(data["periodic_gold"])
 
     army = _parse_stacks(data.get("starting_army", []), "starting_army", allow_empty=True)
 
@@ -156,11 +159,22 @@ def _parse_balance(data: Mapping[str, Any]) -> BalanceConfig:
 
 def _parse_mod(data: Mapping[str, Any]) -> ModMeta:
     _require(isinstance(data, Mapping), "mod must be a mapping")
+    title = str(data.get("title", "CBA Survival")).strip() or "CBA Survival"
+    # The title becomes a folder name in build_mod() and deploy.py (which rmtree's
+    # the target), so it must be a single safe path component - no separators or "..".
+    _require(
+        title == Path(title).name and title not in ("..", ".") and not _has_path_chars(title),
+        f"mod.title must be a safe folder name (no path separators or '..'), got {title!r}",
+    )
     return ModMeta(
-        title=str(data.get("title", "CBA Survival")).strip() or "CBA Survival",
+        title=title,
         author=str(data.get("author", "unknown")).strip() or "unknown",
         description=str(data.get("description", "")).strip(),
     )
+
+
+def _has_path_chars(name: str) -> bool:
+    return any(ch in name for ch in '/\\:*?"<>|')
 
 
 def _parse_periodic_gold(data: Mapping[str, Any]) -> dict[str, int]:
@@ -198,8 +212,23 @@ def _parse_waves(data: Mapping[str, Any]) -> WaveConfig:
         units=_parse_stacks(peak_raw.get("units", []), "peak units"),
     )
 
+    max_concurrent = _int(data, "max_concurrent", minimum=1, maximum=5000, default=200)
+    # Enforce the performance guardrail: no single wave (or the peak) may spawn
+    # more live units than max_concurrent.
+    for wave in waves:
+        total = sum(stack.count for stack in wave.units)
+        _require(
+            total <= max_concurrent,
+            f"wave {wave.name!r} spawns {total} units, exceeding max_concurrent ({max_concurrent})",
+        )
+    peak_total = sum(stack.count for stack in peak.units)
+    _require(
+        peak_total <= max_concurrent,
+        f"peak {peak.name!r} spawns {peak_total} units, exceeding max_concurrent ({max_concurrent})",
+    )
+
     return WaveConfig(
-        max_concurrent=_int(data, "max_concurrent", minimum=1, maximum=5000, default=200),
+        max_concurrent=max_concurrent,
         escalation_cap_wave=_int(data, "escalation_cap_wave", minimum=1, maximum=1000, default=12),
         waves=tuple(waves),
         peak=peak,

@@ -17,7 +17,10 @@ import shutil
 import sys
 from pathlib import Path
 
-os.environ.setdefault("PYTHONUTF8", "1")
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, ValueError):
+    pass
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -46,10 +49,18 @@ def deploy(source: Path, dest_local: Path, dry_run: bool) -> None:
     print(f"  {source}  ->  {target}")
     if dry_run:
         return
-    dest_local.mkdir(parents=True, exist_ok=True)
-    if target.exists():
-        shutil.rmtree(target)
-    shutil.copytree(source, target)
+    try:
+        dest_local.mkdir(parents=True, exist_ok=True)
+        if target.exists():
+            shutil.rmtree(target)
+        shutil.copytree(source, target)
+    except PermissionError:
+        print(
+            f"  Permission denied writing {target}. "
+            "Close AoE2 DE (and the scenario editor) and try again.",
+            file=sys.stderr,
+        )
+        raise
 
 
 def main() -> int:

@@ -5,11 +5,15 @@
 """
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
-os.environ.setdefault("PYTHONUTF8", "1")
+# Make our own prints Windows-safe (the library's status emoji are already
+# silenced by importing the cba_survival package, which sets PRINT_STATUS_UPDATES).
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, ValueError):
+    pass
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))

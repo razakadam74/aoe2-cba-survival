@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from conftest import trigger_named, units_of
 
+from AoE2ScenarioParser.datasets.effects import EffectId
+
 from cba_survival.datasets import CASTLE_ID, VILLAGER_ID, StartingAge
 
 
@@ -68,11 +70,51 @@ def test_scripted_waves_start_disabled(built):
             assert trigger.enabled is False
 
 
-def test_win_and_defeat_shape(built, config):
+def test_win_and_defeat_shape(built, config, enemy_id):
     win = trigger_named(built, "Victory - enemy fortress razed")
     assert len(win.conditions) == 1
+    assert win.conditions[0].object_list == CASTLE_ID
+    assert win.conditions[0].source_player == enemy_id
     assert len(win.effects) == config.balance.defenders  # declare_victory per defender
 
     defeat = trigger_named(built, "Defeat - all defenders eliminated")
     assert len(defeat.conditions) == config.balance.defenders
+    assert all(cond.object_list == CASTLE_ID for cond in defeat.conditions)
     assert len(defeat.effects) == 1
+
+
+def test_activation_chain_reaches_looping_peak(built):
+    # The activation chain (Setup -> Wave 1 -> ... -> Peak) is the core mechanic;
+    # assert it is actually wired via activate_trigger and terminates at the loop.
+    triggers = built.trigger_manager.triggers
+    by_id = {t.trigger_id: t for t in triggers}
+
+    def activated_ids(trigger):
+        return [
+            effect.trigger_id
+            for effect in trigger.effects
+            if effect.effect_type == EffectId.ACTIVATE_TRIGGER and effect.trigger_id in by_id
+        ]
+
+    setup = trigger_named(built, "Setup")
+    links = activated_ids(setup)
+    assert len(links) == 1, "Setup should activate exactly one trigger (Wave 1)"
+
+    current = by_id[links[0]]
+    visited = [current.name]
+    guard = 0
+    while True:
+        guard += 1
+        assert guard < 100, "activation chain did not terminate"
+        nxt = activated_ids(current)
+        if not nxt:
+            break
+        assert len(nxt) == 1
+        current = by_id[nxt[0]]
+        visited.append(current.name)
+
+    assert visited[0].startswith("Wave 1")
+    assert current.name.startswith("Peak")
+    assert current.looping
+    wave_names = [n for n in visited if n.startswith("Wave ")]
+    assert wave_names == sorted(wave_names)

@@ -7,6 +7,7 @@ from pathlib import Path
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 
 from .config import ModConfig, load_config
+from .datasets import VICTORY_CUSTOM
 from .layout import compute_layout
 from .placement import configure_map, place_all
 from .players import configure_players
@@ -17,6 +18,9 @@ def build_scenario(config: ModConfig) -> AoE2DEScenario:
     """Assemble a complete in-memory scenario from *config* (deterministic)."""
     scenario = AoE2DEScenario.from_default()
     scenario.name = config.balance.mod.title
+    # Raze-to-win is the only win: disable standard/conquest/wonder/score routes
+    # so victory is decided solely by our triggers.
+    scenario.option_manager.victory_condition = VICTORY_CUSTOM
 
     layout = compute_layout(config.balance)
     configure_map(scenario, config.balance.map_size)

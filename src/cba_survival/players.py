@@ -48,9 +48,10 @@ def configure_players(scenario: AoE2DEScenario, config: ModConfig) -> None:
 
 
 def _set_diplomacy(manager, defender_ids: list[int], enemy_id: int) -> None:
-    # Defenders allied with each other.
+    # Defenders allied with each other (one team). set_diplomacy_teams takes a
+    # list PER team, so pass the list itself - do not unpack it.
     if len(defender_ids) > 1:
-        manager.set_diplomacy_teams(*defender_ids, diplomacy=DiplomacyState.ALLY)
+        manager.set_diplomacy_teams(defender_ids, diplomacy=DiplomacyState.ALLY)
     # Everyone at war with the enemy fortress, both directions.
     for pid in defender_ids:
         manager.players[pid].set_player_diplomacy(enemy_id, DiplomacyState.ENEMY)
