@@ -1,34 +1,34 @@
-# CBA Survival — Game Design
+# CBA Survival - Game Design
 
 > Status: **v1 spec locked** for the first playable milestone. Stretch ideas are marked *post-v1*.
 
 ## Vision
 A **PvE survival** scenario for Age of Empires II: Definitive Edition, inspired by the community's
-beloved **CBA (Castle Blood Automatic)** scenarios — *Castle* (you defend a cluster of castles),
+beloved **CBA (Castle Blood Automatic)** scenarios - *Castle* (you defend a cluster of castles),
 *Blood* (constant, never-ending combat), *Automatic* (the enemy army spawns on its own).
 
 You defend a base of **4 Castles** against an **endless** stream of escalating waves from an **enemy
-fortress**. The onslaught *never stops* — the only way out is to **raze the enemy's castles**. So you
+fortress**. The onslaught *never stops* - the only way out is to **raze the enemy's castles**. So you
 must **defend and push at the same time**: hold the line while carving out enough of an army to break
 their fortress. Imperial-Age start, full army freedom, classic-CBA economy. Play **solo or up-to-7-player
-co-op** vs the AI enemy — and, later, let a human take the enemy's seat and attack everyone.
+co-op** vs the AI enemy - and, later, let a human take the enemy's seat and attack everyone.
 
 ## Core loop
-1. **Hold** — waves pour out of the enemy fortress and march on your Castles. Keep them off.
-2. **Earn** — every kill pays gold; a periodic drip tops you up.
-3. **Reinforce, upgrade & push** — train any army, research upgrades, and **build army buildings
+1. **Hold** - waves pour out of the enemy fortress and march on your Castles. Keep them off.
+2. **Earn** - every kill pays gold; a periodic drip tops you up.
+3. **Reinforce, upgrade & push** - train any army, research upgrades, and **build army buildings
    forward** (production nearer the enemy) to stage your assault.
-4. **Break out** — you can't outlast the waves (they never stop), so at some point you *must* march on
-   the enemy fortress and **raze its castles** — the only win. Every soldier attacking is one not
+4. **Break out** - you can't outlast the waves (they never stop), so at some point you *must* march on
+   the enemy fortress and **raze its castles** - the only win. Every soldier attacking is one not
    defending: that's the gamble.
 
 ## v1 spec (locked)
 | Aspect | Decision |
 |---|---|
-| Players | **1–7 co-op defenders** (Players 1–7), each with **their own 4 Castles**, vs **1 enemy** (Player 8) — an AI fortress + endless spawner now, **swappable to a human** later. Solo = the 1-defender case. |
+| Players | **1-7 co-op defenders** (Players 1-7), each with **their own 4 Castles**, vs **1 enemy** in the next player slot - an AI fortress + endless spawner now, **swappable to a human** later. The engine needs active players contiguous from Player 1, so the enemy is **Player N+1**: solo = **Player 2**, full 7v1 = **Player 8**. Solo = the 1-defender case. |
 | Objective | **Raze all enemy Castles.** |
 | Waves | **Endless.** Difficulty escalates to a peak around **wave 12**, then keeps coming at full intensity. They never stop. |
-| Win | Destroy **all enemy Castles** — the only win. |
+| Win | Destroy **all enemy Castles** - the only win. |
 | Lose | **You** are eliminated when your own 4 Castles fall (teammates fight on); the **team loses** only when every defender is out. |
 | Fight-back | **Hybrid**: starting army + small auto-reinforcements + train/upgrade with earned resources; **build your own siege** to crack castles. |
 | Economy | Income from **kills + periodic gold** (little/no gathering) + a starting stipend. Spend on army *and* forward buildings. |
@@ -36,45 +36,45 @@ co-op** vs the AI enemy — and, later, let a human take the enemy's seat and at
 | Config | Wave & balance data in **YAML** (`config/`), tunable without touching code. |
 
 ## Enemy fortress & the only win
-Player 2 is deliberately **asymmetric**: no micro-managed enemy army — just a fortress of castles that
+The enemy is deliberately **asymmetric**: no micro-managed enemy army - just a fortress of castles that
 **spawns endless escalating waves** and **defends itself** (its castles fire arrows at attackers). This
 keeps the mode solo-testable while giving you a target to break.
 
 **There is no "survive to win."** The waves never stop, so survival is the *pressure*, not a victory
-condition. The **only win is razing every enemy Castle** — and the tension is that you must do it while
+condition. The **only win is razing every enemy Castle** - and the tension is that you must do it while
 your own 4 castles are still under attack. Turtle too long and the escalation grinds you down; over-commit
 to the attack and your base falls behind you. Timing your break-out is the whole game.
 
 You crack castles with **siege you build yourself** (Rams / Trebuchets / Bombards from your Siege
-Workshop and Castle) — that's why you get full army freedom and a generous-enough economy.
+Workshop and Castle) - that's why you get full army freedom and a generous-enough economy.
 
 ## Players & modes
-- **Co-op survival (1–7 defenders):** Players 1–7 team up, **each defending their own 4 Castles**. You're
+- **Co-op survival (1-7 defenders):** Players 1-7 team up, **each defending their own 4 Castles**. You're
   **eliminated** when your castles fall; teammates fight on. The **team wins** by razing the enemy, and
   only **loses** when everyone is out.
-- **The enemy is one slot (Player 8):** an **AI** fortress + endless spawner today. Because it's just a
-  player slot, everything scales — **solo** is simply the 1-defender case, and **7v1** is the same
+- **The enemy is one slot (Player N+1):** an **AI** fortress + endless spawner today. Because it's just a
+  player slot, everything scales - **solo** is simply the 1-defender case, and **7v1** is the same
   scenario with more seats filled.
-- **Play-as-the-enemy (future):** drop a **human** into Player 8 and they *become* the attacker — an
+- **Play-as-the-enemy (future):** drop a **human** into the enemy slot and they *become* the attacker - an
   asymmetric 1-vs-many "human boss" mode (Vampirism-style), on the same map and triggers. *(Stretch.)*
 
 ## Wave escalation model
-- Waves spawn **continuously** from the enemy fortress on a timer — relentless, classic-CBA style.
+- Waves spawn **continuously** from the enemy fortress on a timer - relentless, classic-CBA style.
 - **Composition** escalates as waves climb, tier by tier:
   - Early: light infantry (Militia / Spearman).
   - Then ranged (Archers / Skirmishers).
   - Then cavalry (Scouts / Knights) + heavier infantry.
-  - Then **siege** (Rams / Mangonels) — dangerous to your castles.
+  - Then **siege** (Rams / Mangonels) - dangerous to your castles.
 - Difficulty **ramps to a peak around wave 12**, then continues **at peak intensity indefinitely**
   (it plateaus so a break-out stays possible, but it never eases off).
 - All sizes, timing, and the escalation cap live in **`config/`** so they can be tuned without code.
 
 ## Your forces & economy
-- **Full army freedom** — Imperial-Age start, train any composition, including the **siege** you need
+- **Full army freedom** - Imperial-Age start, train any composition, including the **siege** you need
   to raze castles.
 - **Villagers to build forward and push.** A classic CBA skill: throw down a Barracks/Range/Stable (or a
   forward **Castle**) closer to the enemy, wall a chokepoint, or expand.
-- **Where villagers come from:** no Town Center — you **train villagers from your Castle**, but they're
+- **Where villagers come from:** no Town Center - you **train villagers from your Castle**, but they're
   **expensive** (a deliberate gold investment), so you buy a builder to push, not to boom. Enabled in DE
   with the `add_train_location` + `change_object_cost` trigger effects (a scenario trick, no data mod).
 - **Income from kills + periodic gold** (classic-CBA, little/no gathering) + a **starting stipend**.
@@ -83,24 +83,24 @@ Workshop and Castle) — that's why you get full army freedom and a generous-eno
   you train.
 
 ## Win / lose
-- **Team win**: destroy **all enemy Castles** → every surviving defender wins. (Active from the start — break out whenever you can.)
-- **Eliminated**: when your **own** 4 Castles fall, you're out — but your teammates fight on.
+- **Team win**: destroy **all enemy Castles** → every surviving defender wins. (Active from the start - break out whenever you can.)
+- **Eliminated**: when your **own** 4 Castles fall, you're out - but your teammates fight on.
 - **Team loss**: when **every** defender has been eliminated.
 - **No survive-to-win**: the waves never stop; razing the enemy is the only way out.
 
 ## Difficulty (post-v1)
 Difficulty tiers scale wave size/composition, spawn rate, the escalation cap, and enemy-fortress
-toughness — implemented as alternate `config/` profiles rather than code branches.
+toughness - implemented as alternate `config/` profiles rather than code branches.
 
 ## Stretch goals (post-v1)
-- **Play-as-the-enemy** — a human takes Player 8 and attacks all defenders (asymmetric 1-vs-many PvP).
-- **Scoring / leaderboards** — fastest raze, or longest hold.
+- **Play-as-the-enemy** - a human takes the enemy slot and attacks all defenders (asymmetric 1-vs-many PvP).
+- **Scoring / leaderboards** - fastest raze, or longest hold.
 - **Boss waves** (unique tanky units) at intervals.
 - **Map variants** (chokepoints, multiple spawn lanes).
 - **Mutators** (e.g., "no ranged", "double siege").
 
 ## Open design questions (let's debate these in issues)
-- How tanky should the enemy fortress be — how *tempting* vs *punishing* is the break-out?
+- How tanky should the enemy fortress be - how *tempting* vs *punishing* is the break-out?
 - Where should the escalation plateau (wave ~12?) so a raze stays possible but the heat never drops?
 - How much gold per kill + periodic drip (and starting stipend)?
 - How expensive should Castle-trained villagers be, and how many do you start with?

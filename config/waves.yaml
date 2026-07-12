@@ -1,0 +1,52 @@
+# CBA Survival - wave script
+# =========================================================================
+# The enemy fortress (Player 8) pours out these waves, then never stops.
+# No coding required: edit counts, add units, reorder waves.
+# Unit names are AoE2ScenarioParser dataset names (MILITIA, ARCHER, ...).
+# =========================================================================
+
+# Safety cap: soft guidance for how many live enemy units the battlefield
+# should hold. Keep per-wave counts modest so the endless loop does not tank
+# performance. (Enforced as an upper bound during config validation.)
+max_concurrent: 200
+
+# For M2 tuning: the wave where difficulty plateaus at peak intensity.
+# The M1 slice plays the explicit `waves` list below, then loops `peak`.
+escalation_cap_wave: 12
+
+# Scripted opening waves. They escalate tier by tier, then hand off to the
+# endless peak loop. delay_seconds = seconds after the previous wave spawns.
+waves:
+  - name: "Light infantry probe"
+    delay_seconds: 25
+    units:
+      - { unit: MILITIA, count: 6 }
+  - name: "Infantry and archers"
+    delay_seconds: 30
+    units:
+      - { unit: MAN_AT_ARMS, count: 5 }
+      - { unit: ARCHER, count: 5 }
+  - name: "Cavalry push"
+    delay_seconds: 30
+    units:
+      - { unit: SPEARMAN, count: 5 }
+      - { unit: SCOUT_CAVALRY, count: 5 }
+      - { unit: ARCHER, count: 4 }
+  - name: "Siege appears"
+    delay_seconds: 35
+    units:
+      - { unit: MAN_AT_ARMS, count: 5 }
+      - { unit: CROSSBOWMAN, count: 5 }
+      - { unit: BATTERING_RAM, count: 1 }
+
+# The endless assault: after the scripted waves this repeats every interval,
+# relentlessly, forever. Raze the enemy Castles or be ground down.
+peak:
+  name: "Endless assault"
+  interval_seconds: 30
+  units:
+    - { unit: KNIGHT, count: 4 }
+    - { unit: CROSSBOWMAN, count: 6 }
+    - { unit: MAN_AT_ARMS, count: 5 }
+    - { unit: MANGONEL, count: 1 }
+    - { unit: BATTERING_RAM, count: 1 }

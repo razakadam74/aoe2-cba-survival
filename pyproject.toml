@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cba-survival"
+version = "0.1.0"
+description = "Code-generated CBA-style PvE survival scenario for Age of Empires II: DE"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+    "AoE2ScenarioParser==0.8.3",
+    "PyYAML>=6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+# Let `python -m pytest` find the package without an editable install.
+pythonpath = ["src"]
+testpaths = ["tests"]
