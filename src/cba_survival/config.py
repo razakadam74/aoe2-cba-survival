@@ -20,7 +20,9 @@ from .datasets import (
 
 RESOURCE_KEYS = ("food", "wood", "gold", "stone")
 MAX_DEFENDERS = 7
-MIN_MAP_SIZE = 60
+# The per-defender base is ~55 tiles deep (castles -> army/reinforce band), so
+# the map must be big enough to keep it clear of the enemy fortress up north.
+MIN_MAP_SIZE = 90
 MAX_MAP_SIZE = 480
 
 
@@ -66,6 +68,34 @@ class ModMeta:
 
 
 @dataclass(frozen=True)
+class KillIncome:
+    """Gold paid per enemy unit killed (classic-CBA economy, M2).
+
+    Implemented as a periodic delta-poll of the Units Killed stat (see
+    triggers.py), since the raw Accumulate Attribute condition never resets.
+    """
+
+    gold_per_kill: int
+    poll_seconds: int
+
+    @property
+    def enabled(self) -> bool:
+        return self.gold_per_kill > 0
+
+
+@dataclass(frozen=True)
+class Reinforcements:
+    """A small squad that arrives at each base on a timer (M2)."""
+
+    interval_seconds: int
+    units: tuple[UnitStack, ...]
+
+    @property
+    def enabled(self) -> bool:
+        return bool(self.units)
+
+
+@dataclass(frozen=True)
 class BalanceConfig:
     mod: ModMeta
     defenders: int
@@ -80,6 +110,8 @@ class BalanceConfig:
     production_buildings: tuple[str, ...]
     houses: int
     periodic_gold: Mapping[str, int]
+    kill_income: KillIncome
+    reinforcements: Reinforcements
     enemy_castles: int
 
     @property
@@ -121,21 +153,25 @@ def _parse_balance(data: Mapping[str, Any]) -> BalanceConfig:
     starting_age = _str(data, "starting_age")
     resolve_starting_age(starting_age)  # raises ConfigError if unknown
 
-    mod = _parse_mod(data.get("mod", {}))
-    stipend = _resources(data.get("stipend", {}), "stipend")
-    villager_cost = _resources(data.get("villager_cost", {}), "villager_cost")
+    mod = _parse_mod(data.get("mod") or {})
+    stipend = _resources(data.get("stipend") or {}, "stipend")
+    villager_cost = _resources(data.get("villager_cost") or {}, "villager_cost")
     # A unit has only three cost slots (resource_1..3 on change_object_cost).
     _require(len(villager_cost) <= 3, "villager_cost may set at most 3 resources")
     _require("periodic_gold" in data, "balance.yaml is missing the 'periodic_gold' block")
     periodic_gold = _parse_periodic_gold(data["periodic_gold"])
+    # `or {}` / `or []` so a bare/null YAML key (e.g. `kill_income:`) reads as
+    # "use defaults / disabled" instead of crashing with a confusing type error.
+    kill_income = _parse_kill_income(data.get("kill_income") or {})
+    reinforcements = _parse_reinforcements(data.get("reinforcements") or {})
 
-    army = _parse_stacks(data.get("starting_army", []), "starting_army", allow_empty=True)
+    army = _parse_stacks(data.get("starting_army") or [], "starting_army", allow_empty=True)
 
-    production = tuple(str(b) for b in data.get("production_buildings", []))
+    production = tuple(str(b) for b in (data.get("production_buildings") or []))
     for name in production:
         resolve_building_id(name)  # raises if not a building
 
-    enemy = data.get("enemy", {})
+    enemy = data.get("enemy") or {}
     _require(isinstance(enemy, Mapping), "enemy must be a mapping")
     enemy_castles = _int(enemy, "castles", minimum=1, maximum=50)
 
@@ -153,7 +189,25 @@ def _parse_balance(data: Mapping[str, Any]) -> BalanceConfig:
         production_buildings=production,
         houses=_int(data, "houses", minimum=0, maximum=200),
         periodic_gold=periodic_gold,
+        kill_income=kill_income,
+        reinforcements=reinforcements,
         enemy_castles=enemy_castles,
+    )
+
+
+def _parse_kill_income(data: Mapping[str, Any]) -> KillIncome:
+    _require(isinstance(data, Mapping), "kill_income must be a mapping")
+    return KillIncome(
+        gold_per_kill=_int(data, "gold_per_kill", minimum=0, maximum=100000, default=0),
+        poll_seconds=_int(data, "poll_seconds", minimum=1, maximum=3600, default=5),
+    )
+
+
+def _parse_reinforcements(data: Mapping[str, Any]) -> Reinforcements:
+    _require(isinstance(data, Mapping), "reinforcements must be a mapping")
+    return Reinforcements(
+        interval_seconds=_int(data, "interval_seconds", minimum=1, maximum=3600, default=60),
+        units=_parse_stacks(data.get("units", []), "reinforcements units", allow_empty=True),
     )
 
 
@@ -296,9 +350,11 @@ def _read_yaml(path: Path) -> Mapping[str, Any]:
 
 __all__ = [
     "BalanceConfig",
+    "KillIncome",
     "ModConfig",
     "ModMeta",
     "PeakWave",
+    "Reinforcements",
     "UnitStack",
     "Wave",
     "WaveConfig",

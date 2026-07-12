@@ -17,6 +17,7 @@ from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 
 from .config import ModConfig, PeakWave, UnitStack, Wave
 from .datasets import (
+    Attribute,
     ButtonLocation,
     CASTLE_ID,
     Operation,
@@ -24,13 +25,15 @@ from .datasets import (
     RESOURCE_IDS,
     VILLAGER_ID,
 )
-from .layout import Layout, spawn_positions
+from .layout import Layout, spawn_positions, squad_positions
 from .players import enemy_player_id
 
 _ALL_UNITS_AFFECTED = -1
 # Villager trains from an empty Castle button slot; r1c1 is the Unique Unit.
 _VILLAGER_BUTTON = ButtonLocation.r3c5.value
 _RESOURCE_ORDER = ("food", "wood", "stone", "gold")
+# Per-player running total of enemy units killed (drives kill income).
+_KILLS_ATTRIBUTE = Attribute.UNITS_KILLED.value
 
 INTRO_MESSAGE = (
     "CBA SURVIVAL\n\n"
@@ -60,6 +63,8 @@ def build_triggers(scenario: AoE2DEScenario, config: ModConfig, layout: Layout) 
     setup = _build_setup(manager, config, defender_ids)
     _build_spawner(manager, waves, layout, setup, enemy_id)
     _build_income(manager, balance, defender_ids)
+    _build_kill_income(manager, balance, defender_ids)
+    _build_reinforcements(manager, balance, layout, defender_ids)
     _build_win(manager, defender_ids, enemy_id)
     _build_defeat(manager, defender_ids, enemy_id)
 
@@ -165,7 +170,7 @@ def _add_spawn(trigger, unit_stacks: tuple[UnitStack, ...], layout: Layout, enem
 
 
 # --------------------------------------------------------------------------- #
-# Economy (M1: periodic gold; kill income lands in M2)
+# Economy: periodic gold (M1) + kill income + reinforcements (M2)
 # --------------------------------------------------------------------------- #
 def _build_income(manager, balance, defender_ids: list[int]) -> None:
     amount = balance.periodic_gold["amount"]
@@ -181,6 +186,72 @@ def _build_income(manager, balance, defender_ids: list[int]) -> None:
             source_player=pid,
             operation=Operation.ADD.value,
         )
+
+
+def _build_kill_income(manager, balance, defender_ids: list[int]) -> None:
+    # Classic-CBA "every kill pays gold". The Accumulate Attribute condition never
+    # resets, so instead we poll each defender's Units Killed stat on a timer and
+    # pay for the kills gained since the previous poll (a delta), which cannot run
+    # away and never touches the displayed Kills score.
+    kill = balance.kill_income
+    if not kill.enabled:
+        return
+    scratch = manager.add_variable("kill_income_scratch")
+    for pid in defender_ids:
+        paid = manager.add_variable(f"kills_paid_p{pid}")
+        trigger = manager.add_trigger(f"Kill income - Player {pid}")
+        trigger.enabled = True
+        trigger.looping = True
+        trigger.new_condition.timer(timer=kill.poll_seconds)
+        # scratch = this player's total Units Killed so far
+        trigger.new_effect.modify_variable_by_resource(
+            tribute_list=_KILLS_ATTRIBUTE, source_player=pid,
+            operation=Operation.SET.value, variable=scratch.variable_id,
+        )
+        # scratch = kills since we last paid (the new delta)
+        trigger.new_effect.modify_variable_by_variable(
+            variable=scratch.variable_id, operation=Operation.SUBTRACT.value, variable2=paid.variable_id,
+        )
+        # scratch = delta * gold_per_kill
+        trigger.new_effect.change_variable(
+            variable=scratch.variable_id, operation=Operation.MULTIPLY.value, quantity=kill.gold_per_kill,
+        )
+        # pay it out (delta of 0 adds 0 gold - a harmless no-op)
+        trigger.new_effect.modify_resource_by_variable(
+            tribute_list=RESOURCE_IDS["gold"], source_player=pid,
+            operation=Operation.ADD.value, variable=scratch.variable_id,
+        )
+        # remember the new total so the next poll only pays for newer kills
+        trigger.new_effect.modify_variable_by_resource(
+            tribute_list=_KILLS_ATTRIBUTE, source_player=pid,
+            operation=Operation.SET.value, variable=paid.variable_id,
+        )
+
+
+def _build_reinforcements(manager, balance, layout: Layout, defender_ids: list[int]) -> None:
+    # A small squad arrives at each base on a timer, for the player to command.
+    reinf = balance.reinforcements
+    if not reinf.enabled:
+        return
+    bases = {base.player_id: base for base in layout.defenders}
+    total = sum(stack.count for stack in reinf.units)
+    for pid in defender_ids:
+        positions = squad_positions(bases[pid].reinforce, total, layout.map_size)
+        trigger = manager.add_trigger(f"Reinforcements - Player {pid}")
+        trigger.enabled = True
+        trigger.looping = True
+        trigger.new_condition.timer(timer=reinf.interval_seconds)
+        index = 0
+        for stack in reinf.units:
+            for _ in range(stack.count):
+                x, y = positions[index]
+                index += 1
+                trigger.new_effect.create_object(
+                    object_list_unit_id=stack.unit_id,
+                    source_player=pid,
+                    location_x=x,
+                    location_y=y,
+                )
 
 
 # --------------------------------------------------------------------------- #

@@ -39,6 +39,7 @@ class DefenderBase:
     army: tuple[tuple[int, int], ...]
     villagers: tuple[tuple[int, int], ...]
     rally: tuple[int, int]
+    reinforce: tuple[int, int]
 
 
 @dataclass(frozen=True)
@@ -113,6 +114,8 @@ def _defender_base(player_id: int, cx: int, size: int, balance: BalanceConfig) -
     villagers = _centered_grid(
         _clamp(cx - 12, size), back_y, balance.starting_villagers, cols=2, dx=_VILLAGER_STEP, dy=_VILLAGER_STEP, size=size
     )
+    # Reinforcements arrive on open ground just in front of the army band.
+    reinforce = (_clamp(cx, size), _clamp(back_y + _BAND_ARMY + 6, size))
     return DefenderBase(
         player_id=player_id,
         castles=castles,
@@ -121,12 +124,18 @@ def _defender_base(player_id: int, cx: int, size: int, balance: BalanceConfig) -
         army=army,
         villagers=villagers,
         rally=rally,
+        reinforce=reinforce,
     )
 
 
 def spawn_positions(spawn: tuple[int, int], total: int, size: int) -> list[tuple[int, int]]:
     """Grid of spawn tiles around *spawn* for *total* units (kept inside the spawn area)."""
     return _centered_grid(spawn[0], spawn[1] - 6, total, cols=8, dx=_SPAWN_STEP, dy=_SPAWN_STEP, size=size)
+
+
+def squad_positions(center: tuple[int, int], total: int, size: int) -> list[tuple[int, int]]:
+    """Grid of tiles centred on *center* for a reinforcement squad of *total* units."""
+    return list(_centered_grid(center[0], center[1], total, cols=6, dx=_ARMY_STEP, dy=_ARMY_STEP, size=size))
 
 
 # --------------------------------------------------------------------------- #
@@ -157,4 +166,4 @@ def _clamp(value: int, size: int) -> int:
     return max(2, min(size - 3, value))
 
 
-__all__ = ["DefenderBase", "EnemyLayout", "Layout", "compute_layout", "spawn_positions"]
+__all__ = ["DefenderBase", "EnemyLayout", "Layout", "compute_layout", "spawn_positions", "squad_positions"]

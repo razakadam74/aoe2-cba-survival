@@ -17,13 +17,13 @@ Milestones are **vertical slices**: each one is a shippable increment. All numbe
 - `scripts/build` + `scripts/deploy`; a round-trip test in `tests/`.
 - **Done when:** it loads in AoE2 DE and you can build forward, win (raze the enemy), and lose.
 
-## M2 - Full escalation & economy
-- **Endless** spawner with tiered archetypes (infantry → ranged → cavalry → siege) from `config/*.yaml`,
-  escalating to a peak around **wave 12** then holding at full intensity.
-- **Kill income** (accumulate_attribute on Kills) + **periodic gold** + starting stipend; Houses for population.
-- Periodic reinforcements; upgrades via the native tech tree.
-- Tune the **enemy fortress** + escalation cap so the break-out is tempting but risky.
-- First balance pass.
+## M2 - Full escalation & economy  🟢 (code complete, pending playtest + balance pass)
+- **Endless** spawner with tiered archetypes (infantry -> ranged -> cavalry -> siege) from `config/*.yaml`,
+  escalating over ~10 scripted waves toward a peak, then holding at full intensity via the looping peak.
+- **Kill income** (per-kill gold via a variable delta-poll of Units Killed) + **periodic gold** + starting stipend; Houses for population.
+- Periodic reinforcements (a squad arrives at each base on a timer); upgrades via the native tech tree.
+- Tune the **enemy fortress** + escalation cap so the break-out is tempting but risky. *(balance = playtest)*
+- First balance pass. *(needs in-game playtest)*
 - **Done when:** the endless ramp feels relentless-but-fair and a well-timed raze is a viable gamble.
 
 ## M3 - Co-op (up to 7v1) & difficulty

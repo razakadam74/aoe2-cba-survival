@@ -14,30 +14,68 @@ max_concurrent: 200
 # The M1 slice plays the explicit `waves` list below, then loops `peak`.
 escalation_cap_wave: 12
 
-# Scripted opening waves. They escalate tier by tier, then hand off to the
-# endless peak loop. delay_seconds = seconds after the previous wave spawns.
+# Scripted opening waves. They escalate tier by tier (infantry -> ranged ->
+# cavalry -> siege), peaking around wave 10, then hand off to the endless peak
+# loop. delay_seconds = seconds after the previous wave spawns. All tunable.
 waves:
   - name: "Light infantry probe"
     delay_seconds: 25
     units:
       - { unit: MILITIA, count: 6 }
-  - name: "Infantry and archers"
+  - name: "Infantry press"
+    delay_seconds: 30
+    units:
+      - { unit: MAN_AT_ARMS, count: 6 }
+      - { unit: SPEARMAN, count: 4 }
+  - name: "Archers join"
     delay_seconds: 30
     units:
       - { unit: MAN_AT_ARMS, count: 5 }
-      - { unit: ARCHER, count: 5 }
+      - { unit: ARCHER, count: 6 }
+  - name: "Skirmish line"
+    delay_seconds: 30
+    units:
+      - { unit: ARCHER, count: 6 }
+      - { unit: SKIRMISHER, count: 4 }
+      - { unit: SPEARMAN, count: 4 }
   - name: "Cavalry push"
     delay_seconds: 30
     units:
+      - { unit: SCOUT_CAVALRY, count: 6 }
       - { unit: SPEARMAN, count: 5 }
-      - { unit: SCOUT_CAVALRY, count: 5 }
       - { unit: ARCHER, count: 4 }
+  - name: "Heavy infantry"
+    delay_seconds: 30
+    units:
+      - { unit: LONG_SWORDSMAN, count: 6 }
+      - { unit: CROSSBOWMAN, count: 6 }
+      - { unit: KNIGHT, count: 3 }
+  - name: "Knights and crossbows"
+    delay_seconds: 30
+    units:
+      - { unit: KNIGHT, count: 5 }
+      - { unit: CROSSBOWMAN, count: 6 }
+      - { unit: SPEARMAN, count: 5 }
   - name: "Siege appears"
     delay_seconds: 35
     units:
-      - { unit: MAN_AT_ARMS, count: 5 }
-      - { unit: CROSSBOWMAN, count: 5 }
+      - { unit: MAN_AT_ARMS, count: 6 }
+      - { unit: CROSSBOWMAN, count: 6 }
       - { unit: BATTERING_RAM, count: 1 }
+  - name: "Combined arms"
+    delay_seconds: 35
+    units:
+      - { unit: KNIGHT, count: 5 }
+      - { unit: CROSSBOWMAN, count: 6 }
+      - { unit: SPEARMAN, count: 5 }
+      - { unit: MANGONEL, count: 1 }
+  - name: "Siege escalation"
+    delay_seconds: 35
+    units:
+      - { unit: LONG_SWORDSMAN, count: 6 }
+      - { unit: CROSSBOWMAN, count: 6 }
+      - { unit: BATTERING_RAM, count: 2 }
+      - { unit: MANGONEL, count: 1 }
 
 # The endless assault: after the scripted waves this repeats every interval,
 # relentlessly, forever. Raze the enemy Castles or be ground down.
@@ -45,8 +83,8 @@ peak:
   name: "Endless assault"
   interval_seconds: 30
   units:
-    - { unit: KNIGHT, count: 4 }
-    - { unit: CROSSBOWMAN, count: 6 }
-    - { unit: MAN_AT_ARMS, count: 5 }
+    - { unit: KNIGHT, count: 5 }
+    - { unit: CROSSBOWMAN, count: 8 }
+    - { unit: CHAMPION, count: 6 }
     - { unit: MANGONEL, count: 1 }
-    - { unit: BATTERING_RAM, count: 1 }
+    - { unit: BATTERING_RAM, count: 2 }
