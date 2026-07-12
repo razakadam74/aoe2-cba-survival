@@ -38,21 +38,28 @@ def test_expected_triggers_present(built, config):
     assert "Setup" in names
     assert any(n.startswith("Wave 1") for n in names)
     assert any(n.startswith("Peak") for n in names)
+    assert "March - enemy assault" in names
     assert "Victory - enemy fortress razed" in names
     assert "Defeat - all defenders eliminated" in names
-    assert sum(n.startswith("Income") for n in names) == config.balance.defenders
+    expected_income = config.balance.defenders if config.balance.periodic_income.enabled else 0
+    assert sum(n.startswith("Income") for n in names) == expected_income
 
 
 def test_trigger_count(built, config):
-    # setup + waves + peak + income(N) + kill-income(N?) + reinforcements(N?)
-    #   + win + elimination(N) + defeat
+    # setup + waves + peak + march + income(N?) + kill-income(N?)
+    #   + reinforcements(N?) + castle-production(N?) + win + elimination(N) + defeat
     defenders = config.balance.defenders
-    expected = 1 + len(config.waves.waves) + 1 + defenders
-    if config.balance.kill_income.enabled:
+    balance = config.balance
+    expected = 1 + len(config.waves.waves) + 1 + 1  # setup, waves, peak, march
+    if balance.periodic_income.enabled:
         expected += defenders
-    if config.balance.reinforcements.enabled:
+    if balance.kill_income.enabled:
         expected += defenders
-    expected += 1 + defenders + 1
+    if balance.reinforcements.enabled:
+        expected += defenders
+    if balance.player_production.enabled:
+        expected += defenders
+    expected += 1 + defenders + 1  # win, elimination(N), defeat
     assert len(built.trigger_manager.triggers) == expected
 
 

@@ -138,6 +138,26 @@ def squad_positions(center: tuple[int, int], total: int, size: int) -> list[tupl
     return list(_centered_grid(center[0], center[1], total, cols=6, dx=_ARMY_STEP, dy=_ARMY_STEP, size=size))
 
 
+def castle_spawn_positions(
+    castles: tuple[tuple[int, int], ...], total: int, size: int, front_dy: int
+) -> list[tuple[int, int]]:
+    """Distribute *total* units across *castles*, each placed *front_dy* tiles in
+    front of its castle (negative dy = toward lower y). Units stack in small rows
+    per castle so they visibly pour out of each castle."""
+    if not castles or total <= 0:
+        return []
+    step = 1 if front_dy >= 0 else -1
+    positions: list[tuple[int, int]] = []
+    count = len(castles)
+    for i in range(total):
+        cx, cy = castles[i % count]
+        slot = i // count
+        ox = (slot % 3) - 1
+        oy = slot // 3
+        positions.append((_clamp(cx + ox, size), _clamp(cy + front_dy + step * oy, size)))
+    return positions
+
+
 # --------------------------------------------------------------------------- #
 # Geometry helpers
 # --------------------------------------------------------------------------- #
@@ -166,4 +186,12 @@ def _clamp(value: int, size: int) -> int:
     return max(2, min(size - 3, value))
 
 
-__all__ = ["DefenderBase", "EnemyLayout", "Layout", "compute_layout", "spawn_positions", "squad_positions"]
+__all__ = [
+    "DefenderBase",
+    "EnemyLayout",
+    "Layout",
+    "castle_spawn_positions",
+    "compute_layout",
+    "spawn_positions",
+    "squad_positions",
+]

@@ -113,12 +113,12 @@ def test_villager_cost_over_three_resources_rejected():
         parse_config(balance, waves)
 
 
-def test_missing_periodic_gold_block_rejected():
+def test_absent_periodic_income_disables_it():
     balance, waves = _raw()
     balance = copy.deepcopy(balance)
-    del balance["periodic_gold"]
-    with pytest.raises(ConfigError):
-        parse_config(balance, waves)
+    del balance["periodic_income"]
+    config = parse_config(balance, waves)
+    assert not config.balance.periodic_income.enabled
 
 
 def test_null_optional_blocks_are_treated_as_disabled():

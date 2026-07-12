@@ -21,3 +21,6 @@ Thumbs.db
 desktop.ini
 .idea/
 .vscode/
+
+# Local base scenarios we build on top of (third-party; not redistributed)
+base/

@@ -84,8 +84,36 @@ class KillIncome:
 
 
 @dataclass(frozen=True)
+class PeriodicIncome:
+    """A steady trickle of resources so you can always build (all four types)."""
+
+    interval_seconds: int
+    resources: Mapping[str, int]
+
+    @property
+    def enabled(self) -> bool:
+        return any(amount > 0 for amount in self.resources.values())
+
+
+@dataclass(frozen=True)
 class Reinforcements:
     """A small squad that arrives at each base on a timer (M2)."""
+
+    interval_seconds: int
+    units: tuple[UnitStack, ...]
+
+    @property
+    def enabled(self) -> bool:
+        return bool(self.units)
+
+
+@dataclass(frozen=True)
+class PlayerProduction:
+    """Your castles auto-produce these units for you to command (classic CBA).
+
+    Spawned across your castles every interval_seconds; set this to your civ's
+    unique unit (or any composition). Empty units disables it.
+    """
 
     interval_seconds: int
     units: tuple[UnitStack, ...]
@@ -109,9 +137,10 @@ class BalanceConfig:
     starting_army: tuple[UnitStack, ...]
     production_buildings: tuple[str, ...]
     houses: int
-    periodic_gold: Mapping[str, int]
+    periodic_income: PeriodicIncome
     kill_income: KillIncome
     reinforcements: Reinforcements
+    player_production: PlayerProduction
     enemy_castles: int
 
     @property
@@ -158,12 +187,12 @@ def _parse_balance(data: Mapping[str, Any]) -> BalanceConfig:
     villager_cost = _resources(data.get("villager_cost") or {}, "villager_cost")
     # A unit has only three cost slots (resource_1..3 on change_object_cost).
     _require(len(villager_cost) <= 3, "villager_cost may set at most 3 resources")
-    _require("periodic_gold" in data, "balance.yaml is missing the 'periodic_gold' block")
-    periodic_gold = _parse_periodic_gold(data["periodic_gold"])
+    periodic_income = _parse_periodic_income(data.get("periodic_income") or {})
     # `or {}` / `or []` so a bare/null YAML key (e.g. `kill_income:`) reads as
     # "use defaults / disabled" instead of crashing with a confusing type error.
     kill_income = _parse_kill_income(data.get("kill_income") or {})
     reinforcements = _parse_reinforcements(data.get("reinforcements") or {})
+    player_production = _parse_player_production(data.get("player_production") or {})
 
     army = _parse_stacks(data.get("starting_army") or [], "starting_army", allow_empty=True)
 
@@ -188,9 +217,10 @@ def _parse_balance(data: Mapping[str, Any]) -> BalanceConfig:
         starting_army=army,
         production_buildings=production,
         houses=_int(data, "houses", minimum=0, maximum=200),
-        periodic_gold=periodic_gold,
+        periodic_income=periodic_income,
         kill_income=kill_income,
         reinforcements=reinforcements,
+        player_production=player_production,
         enemy_castles=enemy_castles,
     )
 
@@ -208,6 +238,14 @@ def _parse_reinforcements(data: Mapping[str, Any]) -> Reinforcements:
     return Reinforcements(
         interval_seconds=_int(data, "interval_seconds", minimum=1, maximum=3600, default=60),
         units=_parse_stacks(data.get("units", []), "reinforcements units", allow_empty=True),
+    )
+
+
+def _parse_player_production(data: Mapping[str, Any]) -> PlayerProduction:
+    _require(isinstance(data, Mapping), "player_production must be a mapping")
+    return PlayerProduction(
+        interval_seconds=_int(data, "interval_seconds", minimum=1, maximum=3600, default=15),
+        units=_parse_stacks(data.get("units", []), "player_production units", allow_empty=True),
     )
 
 
@@ -231,12 +269,12 @@ def _has_path_chars(name: str) -> bool:
     return any(ch in name for ch in '/\\:*?"<>|')
 
 
-def _parse_periodic_gold(data: Mapping[str, Any]) -> dict[str, int]:
-    _require(isinstance(data, Mapping), "periodic_gold must be a mapping")
-    return {
-        "amount": _int(data, "amount", minimum=0, maximum=100000),
-        "interval_seconds": _int(data, "interval_seconds", minimum=1, maximum=3600),
-    }
+def _parse_periodic_income(data: Mapping[str, Any]) -> PeriodicIncome:
+    _require(isinstance(data, Mapping), "periodic_income must be a mapping")
+    return PeriodicIncome(
+        interval_seconds=_int(data, "interval_seconds", minimum=1, maximum=3600, default=12),
+        resources=_resources(data.get("resources") or {}, "periodic_income.resources"),
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -354,6 +392,8 @@ __all__ = [
     "ModConfig",
     "ModMeta",
     "PeakWave",
+    "PeriodicIncome",
+    "PlayerProduction",
     "Reinforcements",
     "UnitStack",
     "Wave",

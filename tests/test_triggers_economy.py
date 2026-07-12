@@ -65,3 +65,41 @@ def test_kill_income_poll_seconds_must_be_positive():
     balance["kill_income"]["poll_seconds"] = 0
     with pytest.raises(ConfigError):
         parse_config(balance, waves)
+
+
+def test_periodic_income_grants_all_configured_resources(built, config):
+    from cba_survival.datasets import RESOURCE_IDS
+
+    trigger = trigger_named(built, "Income - Player 1")
+    assert trigger.looping
+    granted = {e.tribute_list for e in trigger.effects}
+    for name, amount in config.balance.periodic_income.resources.items():
+        if amount > 0:
+            assert RESOURCE_IDS[name] in granted, f"income should grant {name}"
+
+
+def test_castle_production_present_and_per_castle(built, config):
+    assert config.balance.player_production.enabled
+    trigger = trigger_named(built, "Castle production - Player 1")
+    assert trigger.looping
+    per_castle = sum(stack.count for stack in config.balance.player_production.units)
+    creates = [e for e in trigger.effects if e.effect_type == EffectId.CREATE_OBJECT]
+    assert len(creates) == per_castle * 4  # four castles each produce the composition
+    assert all(e.source_player == 1 for e in creates)
+
+
+def test_castle_production_disabled_produces_no_triggers():
+    balance, waves = _raw()
+    balance = copy.deepcopy(balance)
+    balance["player_production"]["units"] = []
+    scenario = build_scenario(parse_config(balance, waves))
+    assert not any(t.name.startswith("Castle production") for t in scenario.trigger_manager.triggers)
+
+
+def test_march_trigger_commands_enemy(built):
+    trigger = trigger_named(built, "March - enemy assault")
+    assert trigger.looping
+    assert len(trigger.conditions) == 1  # the re-command timer
+    moves = [e for e in trigger.effects if e.effect_type == EffectId.ATTACK_MOVE]
+    assert len(moves) == 1
+

@@ -26,12 +26,14 @@ map_size: 120
 # Everyone starts in the Imperial Age (full army freedom from the start).
 starting_age: IMPERIAL_AGE
 
-# Starting resources granted to every defender (the "stipend").
+# Starting resources granted to every defender (the "stipend"). Generous on
+# purpose - your main army comes free from your castles (see player_production),
+# so resources are for siege, buildings, and upgrades.
 stipend:
-  food: 1000
-  wood: 1000
-  gold: 1500
-  stone: 800
+  food: 5000
+  wood: 5000
+  gold: 5000
+  stone: 3000
 
 # Population headroom (also raised in-game by building Houses).
 population_cap: 200
@@ -52,6 +54,14 @@ starting_army:
   - { unit: KNIGHT, count: 4 }
   - { unit: SPEARMAN, count: 4 }
 
+# Classic CBA: each of your castles auto-produces this composition for you to
+# command, every interval_seconds, at no resource cost. Set it to your civ's
+# unique unit (or any mix). Leave units empty ([]) to disable.
+player_production:
+  interval_seconds: 12
+  units:
+    - { unit: THROWING_AXEMAN, count: 1 }
+
 # Core production buildings placed at each defender base (Imperial CBA kit).
 production_buildings:
   - BARRACKS
@@ -63,21 +73,24 @@ production_buildings:
   - UNIVERSITY
 houses: 6
 
-# Basic income: a periodic gold drip on top of the stipend above (works alongside
-# the kill income below).
-periodic_gold:
-  amount: 120
-  interval_seconds: 20
+# Steady income of ALL resources on a timer, so you can always build (units and
+# buildings cost food/wood/gold/stone, not just gold). Runs alongside kill income.
+periodic_income:
+  interval_seconds: 12
+  resources:
+    food: 200
+    wood: 200
+    gold: 150
+    stone: 80
 
-# Kill income (M2): classic-CBA "every kill pays gold". Every poll_seconds we
-# convert your new enemy kills into gold at gold_per_kill each. Set
-# gold_per_kill: 0 to disable.
+# Kill income: classic-CBA "every kill pays gold". Every poll_seconds we convert
+# your new enemy kills into gold at gold_per_kill each. Set gold_per_kill: 0 to disable.
 kill_income:
-  gold_per_kill: 15
+  gold_per_kill: 20
   poll_seconds: 5
 
-# Periodic reinforcements (M2): a small squad arrives at each base on a timer, on
-# top of whatever you train. Leave units empty ([]) to disable.
+# Periodic reinforcements: a small squad arrives at each base on a timer, on top
+# of your castle production. Leave units empty ([]) to disable.
 reinforcements:
   interval_seconds: 45
   units:
@@ -85,6 +98,7 @@ reinforcements:
     - { unit: CROSSBOWMAN, count: 2 }
 
 # The enemy fortress (solo = Player 2, up to Player 8 at 7v1): raze all of these
-# Castles to win.
+# Castles to win. Their waves pour out of these castles.
 enemy:
-  castles: 3
+  castles: 5
+

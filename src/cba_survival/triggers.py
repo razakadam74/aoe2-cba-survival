@@ -25,10 +25,13 @@ from .datasets import (
     RESOURCE_IDS,
     VILLAGER_ID,
 )
-from .layout import Layout, spawn_positions, squad_positions
+from .layout import Layout, castle_spawn_positions, squad_positions
 from .players import enemy_player_id
 
 _ALL_UNITS_AFFECTED = -1
+_MARCH_INTERVAL = 2  # seconds; re-command enemy units so freshly spawned ones march
+_ENEMY_FRONT_DY = -5  # spawn enemy units just south of their castles (toward you)
+_PLAYER_FRONT_DY = 6  # spawn your castle units just in front of your castles
 # Villager trains from an empty Castle button slot; r1c1 is the Unique Unit.
 _VILLAGER_BUTTON = ButtonLocation.r3c5.value
 _RESOURCE_ORDER = ("food", "wood", "stone", "gold")
@@ -62,9 +65,11 @@ def build_triggers(scenario: AoE2DEScenario, config: ModConfig, layout: Layout) 
 
     setup = _build_setup(manager, config, defender_ids)
     _build_spawner(manager, waves, layout, setup, enemy_id)
+    _build_march(manager, layout, enemy_id)
     _build_income(manager, balance, defender_ids)
     _build_kill_income(manager, balance, defender_ids)
     _build_reinforcements(manager, balance, layout, defender_ids)
+    _build_player_production(manager, balance, layout, defender_ids)
     _build_win(manager, defender_ids, enemy_id)
     _build_defeat(manager, defender_ids, enemy_id)
 
@@ -132,9 +137,11 @@ def _build_spawner(manager, waves, layout: Layout, setup, enemy_id: int) -> None
 
 
 def _add_spawn(trigger, unit_stacks: tuple[UnitStack, ...], layout: Layout, enemy_id: int) -> None:
+    # Units pour out of the enemy fortress (spread across its castles). Movement is
+    # handled by the separate looping March trigger - create + attack_move in one
+    # trigger is unreliable (freshly created units aren't selectable yet).
     total = sum(stack.count for stack in unit_stacks)
-    positions = spawn_positions(layout.enemy.spawn, total, layout.map_size)
-
+    positions = castle_spawn_positions(layout.enemy.castles, total, layout.map_size, _ENEMY_FRONT_DY)
     index = 0
     for stack in unit_stacks:
         for _ in range(stack.count):
@@ -147,45 +154,84 @@ def _add_spawn(trigger, unit_stacks: tuple[UnitStack, ...], layout: Layout, enem
                 location_y=y,
             )
 
+
+def _build_march(manager, layout: Layout, enemy_id: int) -> None:
+    # Continuously send every enemy unit toward the defenders. Runs every couple of
+    # seconds so units spawned from the fortress start marching within ~2s. Only
+    # commands units north of the defender castles, so it never pulls attackers off
+    # the base they have already reached.
     target_x, target_y = layout.defender_centroid
-    # Command every unit we just spawned: use their bounding box (+1 tile) as the
-    # selection area and affect all of them, so none are ever left stranded.
     size = layout.map_size
-    xs = [px for px, _ in positions]
-    ys = [py for _, py in positions]
-    x1 = max(0, min(xs) - 1)
-    y1 = max(0, min(ys) - 1)
-    x2 = min(size - 1, max(xs) + 1)
-    y2 = min(size - 1, max(ys) + 1)
-    trigger.new_effect.attack_move(
+    march = manager.add_trigger("March - enemy assault")
+    march.enabled = True
+    march.looping = True
+    march.new_condition.timer(timer=_MARCH_INTERVAL)
+    march.new_effect.attack_move(
         source_player=enemy_id,
         location_x=target_x,
         location_y=target_y,
-        area_x1=x1,
-        area_y1=y1,
-        area_x2=x2,
-        area_y2=y2,
+        area_x1=0,
+        area_y1=min(target_y + 4, size - 1),
+        area_x2=size - 1,
+        area_y2=size - 1,
         max_units_affected=_ALL_UNITS_AFFECTED,
     )
+
+
+def _build_player_production(manager, balance, layout: Layout, defender_ids: list[int]) -> None:
+    # Classic CBA: each of your castles auto-produces units for you to command (no
+    # resource cost). Set the composition (e.g. your unique unit) in config.
+    prod = balance.player_production
+    if not prod.enabled:
+        return
+    bases = {base.player_id: base for base in layout.defenders}
+    per_castle = sum(stack.count for stack in prod.units)
+    for pid in defender_ids:
+        base = bases[pid]
+        trigger = manager.add_trigger(f"Castle production - Player {pid}")
+        trigger.enabled = True
+        trigger.looping = True
+        trigger.new_condition.timer(timer=prod.interval_seconds)
+        for cx, cy in base.castles:
+            spot = (cx, min(cy + _PLAYER_FRONT_DY, layout.map_size - 3))
+            positions = squad_positions(spot, per_castle, layout.map_size)
+            index = 0
+            for stack in prod.units:
+                for _ in range(stack.count):
+                    x, y = positions[index]
+                    index += 1
+                    trigger.new_effect.create_object(
+                        object_list_unit_id=stack.unit_id,
+                        source_player=pid,
+                        location_x=x,
+                        location_y=y,
+                    )
 
 
 # --------------------------------------------------------------------------- #
 # Economy: periodic gold (M1) + kill income + reinforcements (M2)
 # --------------------------------------------------------------------------- #
 def _build_income(manager, balance, defender_ids: list[int]) -> None:
-    amount = balance.periodic_gold["amount"]
-    interval = balance.periodic_gold["interval_seconds"]
+    # Steady trickle of ALL configured resources so you can always build (units
+    # and buildings cost food/wood/gold/stone, not just gold).
+    income_cfg = balance.periodic_income
+    if not income_cfg.enabled:
+        return
     for pid in defender_ids:
         income = manager.add_trigger(f"Income - Player {pid}")
         income.enabled = True
         income.looping = True
-        income.new_condition.timer(timer=interval)
-        income.new_effect.modify_resource(
-            quantity=amount,
-            tribute_list=RESOURCE_IDS["gold"],
-            source_player=pid,
-            operation=Operation.ADD.value,
-        )
+        income.new_condition.timer(timer=income_cfg.interval_seconds)
+        for name in _RESOURCE_ORDER:
+            amount = income_cfg.resources.get(name, 0)
+            if amount <= 0:
+                continue
+            income.new_effect.modify_resource(
+                quantity=amount,
+                tribute_list=RESOURCE_IDS[name],
+                source_player=pid,
+                operation=Operation.ADD.value,
+            )
 
 
 def _build_kill_income(manager, balance, defender_ids: list[int]) -> None:
